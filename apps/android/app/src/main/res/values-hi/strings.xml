@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Vibely</string>
+    <string name="app_tagline">मिलें. चैट करें. कनेक्ट करें।</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">होम</string>
+    <string name="nav_discover">खोजें</string>
+    <string name="nav_match">मैच</string>
+    <string name="nav_call">कॉल</string>
+    <string name="nav_chat">चैट</string>
+    <string name="nav_wallet">वॉलेट</string>
+    <string name="nav_gifts">गिफ्ट्स</string>
+    <string name="nav_history">हिस्ट्री</string>
+    <string name="nav_notifications">सूचनाएं</string>
+    <string name="nav_settings">सेटिंग्स</string>
+    <string name="nav_profile">प्रोफाइल</string>
+
+    <!-- Common -->
+    <string name="loading">लोड हो रहा है...</string>
+    <string name="refresh">रीफ्रेश</string>
+    <string name="save">सहेजें</string>
+    <string name="cancel">रद्द करें</string>
+    <string name="delete">हटाएं</string>
+    <string name="confirm">पुष्टि करें</string>
+    <string name="back">वापस</string>
+    <string name="next">आगे</string>
+    <string name="retry">पुनः प्रयास करें</string>
+
+    <!-- Wallet -->
+    <string name="wallet_title">वॉलेट</string>
+    <string name="wallet_balance">कॉइन बैलेंस</string>
+    <string name="wallet_transactions">लेनदेन</string>
+    <string name="wallet_buy_coins">कॉइन खरीदें</string>
+    <string name="wallet_no_transactions">कोई लेनदेन नहीं।</string>
+    <string name="coins">कॉइन</string>
+
+    <!-- Chat -->
+    <string name="chat_title">चैट</string>
+    <string name="chat_type_message">संदेश टाइप करें</string>
+    <string name="chat_send">भेजें</string>
+    <string name="chat_no_conversations">कोई बातचीत नहीं।</string>
+    <string name="chat_select_conversation">बातचीत चुनें</string>
+    <string name="chat_typing">किसी टाइप कर रहा है...</string>
+
+    <!-- Call -->
+    <string name="call_title">वीडियो कॉल</string>
+    <string name="call_connecting">कनेक्ट हो रहा है...</string>
+    <string name="call_connected">कनेक्टेड</string>
+    <string name="call_reconnecting">पुनः कनेक्ट हो रहा है...</string>
+    <string name="call_failed">कॉल विफल</string>
+    <string name="call_ended">कॉल समाप्त</string>
+    <string name="call_mute">म्यूट</string>
+    <string name="call_unmute">अनम्यूट</string>
+    <string name="call_camera_on">कैमरा ऑन</string>
+    <string name="call_camera_off">कैमरा ऑफ</string>
+    <string name="call_switch_camera">कैमरा बदलें</string>
+    <string name="call_end_call">कॉल समाप्त करें</string>
+
+    <!-- Notifications -->
+    <string name="notifications_title">सूचनाएं</string>
+    <string name="notifications_mark_all_read">सभी को पढ़ा हुआ मार्क करें</string>
+    <string name="notifications_no_notifications">आप सब कुछ पढ़ चुके हैं।</string>
+    <string name="notifications_mark_read">पढ़ा हुआ मार्क करें</string>
+
+    <!-- History -->
+    <string name="history_title">कॉल हिस्ट्री</string>
+    <string name="history_no_calls">अभी तक कोई कॉल नहीं।</string>
+    <string name="history_call_again">फिर कॉल करें</string>
+    <string name="history_favorite">पसंदीदा</string>
+    <string name="history_block">ब्लॉक</string>
+    <string name="history_report">रिपोर्ट</string>
+    <string name="history_duration">अवधि</string>
+    <string name="history_status">स्थिति</string>
+</resources>

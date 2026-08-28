@@ -1,0 +1,83 @@
+{
+  "dashboard": {
+    "title": "Vibely Production Dashboard",
+    "uid": "vibely-main",
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Request Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total[5m])",
+            "legendFormat": "{{method}} {{endpoint}}",
+          }
+        ],
+        "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      },
+      {
+        "id": 2,
+        "title": "Error Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total{status=~\"5..\"}[5m])",
+            "legendFormat": "{{endpoint}}",
+          }
+        ],
+        "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      },
+      {
+        "id": 3,
+        "title": "Active WebSocket Connections",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "websocket_connections_active",
+            "legendFormat": "Active Connections",
+          }
+        ],
+        "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      },
+      {
+        "id": 4,
+        "title": "Call Success Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(calls_total{status=\"ACTIVE\"}[5m]) / rate(calls_total[5m]) * 100",
+            "legendFormat": "Success %",
+          }
+        ],
+        "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+      },
+      {
+        "id": 5,
+        "title": "Database Connections",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "pg_stat_connections_count",
+            "legendFormat": "Active DB Connections",
+          }
+        ],
+        "gridPos": { "x": 0, "y": 16, "w": 12, "h": 8 },
+      },
+      {
+        "id": 6,
+        "title": "Redis Memory Usage",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "redis_memory_used_bytes",
+            "legendFormat": "Memory Used",
+          }
+        ],
+        "gridPos": { "x": 12, "y": 16, "w": 12, "h": 8 },
+      },
+    ],
+    "time": { "from": "now-1h", "to": "now" },
+    "refresh": "30s",
+  }
+}

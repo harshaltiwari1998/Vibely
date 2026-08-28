@@ -1,0 +1,522 @@
+// =====================================================================
+// Vibely - Prisma schema (PostgreSQL)
+// Foundation models + prepared models for future features.
+// =====================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------
+// Core identity
+// ---------------------------------------------------------------------
+
+enum Gender {
+  MALE
+  FEMALE
+  NON_BINARY
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  RESTRICTED
+  SUSPENDED
+  BANNED
+}
+
+enum OnlineStatus {
+  ONLINE
+  OFFLINE
+  IN_CALL
+  BUSY
+}
+
+model User {
+  id           String     @id @default(uuid())
+  username     String     @unique
+  email        String     @unique
+  passwordHash String
+  dateOfBirth  DateTime
+  gender       Gender
+  country      String
+  language     String
+  avatarUrl    String?
+  emailVerified Boolean   @default(false)
+  verificationToken String? @unique
+  verificationExpires DateTime?
+  status       UserStatus @default(PENDING)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  profile        Profile?
+  preferences    UserPreference?
+  sessions       UserSession[]
+  devices        Device[]
+  wallet         Wallet?
+  coinTransactions CoinTransaction[]
+  payments       Payment[]
+  sentReports    Report[]         @relation("Reporter")
+  receivedReports Report[]        @relation("Reported")
+  sentGifts      GiftTransaction[] @relation("GiftSender")
+  receivedGifts  GiftTransaction[] @relation("GiftReceiver")
+  blocksMade     Block[]          @relation("Blocker")
+  blocksReceived Block[]          @relation("Blocked")
+  favorites      Favorite[]       @relation("FavoriteOwner")
+  favoriteTargets Favorite[]      @relation("FavoriteTarget")
+  bans           UserBan[]
+  moderatedBy    ModerationAction[] @relation("Moderator")
+  moderatedTargets ModerationAction[] @relation("ModeratedTarget")
+  assignedReports Report[]         @relation("ReportAssignee")
+  initiatedCalls Call[]           @relation("CallInitiator")
+  receivedCalls  Call[]           @relation("CallReceiver")
+  callParticipants CallParticipant[]
+  messages       Message[]
+  notifications  Notification[]
+  matchesA       Match[]          @relation("MatchUserA")
+  matchesB       Match[]          @relation("MatchUserB")
+  chatsOne       Chat[]           @relation("ChatParticipantOne")
+  chatsTwo       Chat[]           @relation("ChatParticipantTwo")
+  chatParticipantEntries ChatParticipant[]
+
+  @@index([country])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Profile {
+  id          String       @id @default(uuid())
+  userId      String       @unique
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio         String?
+  interests   String[]
+  onlineStatus OnlineStatus @default(OFFLINE)
+  lastSeen    DateTime     @default(now())
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([onlineStatus])
+}
+
+model UserPreference {
+  id                String   @id @default(uuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  preferredGender   Gender?
+  preferredAgeMin   Int      @default(18)
+  preferredAgeMax   Int      @default(99)
+  preferredCountries String[]
+  preferredLanguages String[]
+}
+
+// ---------------------------------------------------------------------
+// Matching, calls, chat (prepared)
+// ---------------------------------------------------------------------
+
+enum MatchStatus {
+  WAITING
+  MATCHED
+  ACCEPTED
+  DECLINED
+  CANCELLED
+  COMPLETED
+}
+
+model Match {
+  id        String      @id @default(uuid())
+  userA     String
+  userB     String?
+  status    MatchStatus @default(WAITING)
+  createdAt DateTime    @default(now())
+  startedAt DateTime?
+  endedAt   DateTime?
+  userAUser User @relation("MatchUserA", fields: [userA], references: [id])
+  userBUser User? @relation("MatchUserB", fields: [userB], references: [id])
+
+  @@index([status])
+  @@index([userA])
+  @@index([userB])
+  @@index([createdAt])
+}
+
+enum CallType {
+  VIDEO
+  AUDIO
+}
+
+enum CallStatus {
+  INITIATED
+  RINGING
+  ACTIVE
+  ENDED
+  MISSED
+  REJECTED
+  FAILED
+}
+
+model Call {
+  id               String      @id @default(uuid())
+  type             CallType    @default(VIDEO)
+  status           CallStatus  @default(INITIATED)
+  initiatorId      String
+  initiator        User        @relation("CallInitiator", fields: [initiatorId], references: [id])
+  receiverId       String
+  receiver         User        @relation("CallReceiver", fields: [receiverId], references: [id])
+  matchId          String?
+  startedAt        DateTime    @default(now())
+  endedAt          DateTime?
+  durationSeconds  Int         @default(0)
+  endReason        String?
+  participants     CallParticipant[]
+
+  @@index([initiatorId])
+  @@index([receiverId])
+  @@index([status])
+  @@index([startedAt])
+}
+
+model CallParticipant {
+  id        String   @id @default(uuid())
+  callId    String
+  call      Call     @relation(fields: [callId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  joinedAt  DateTime @default(now())
+  leftAt    DateTime?
+
+  @@index([callId])
+  @@index([userId])
+}
+
+model Chat {
+  id              String   @id @default(uuid())
+  participantOneId String
+  participantTwoId String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  participantOne  User           @relation("ChatParticipantOne", fields: [participantOneId], references: [id])
+  participantTwo  User           @relation("ChatParticipantTwo", fields: [participantTwoId], references: [id])
+  messages        Message[]
+  participants    ChatParticipant[]
+
+  @@index([participantOneId])
+  @@index([participantTwoId])
+  @@index([updatedAt])
+}
+
+model ChatParticipant {
+  id        String   @id @default(uuid())
+  chatId    String
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  joinedAt  DateTime @default(now())
+  leftAt    DateTime?
+  lastReadMessageId String?
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  GIFT
+  SYSTEM
+}
+
+enum MessageStatus {
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+model Message {
+  id        String      @id @default(uuid())
+  chatId    String
+  chat      Chat        @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  senderId  String
+  sender    User        @relation(fields: [senderId], references: [id])
+  type      MessageType @default(TEXT)
+  content   String
+  status    MessageStatus @default(SENT)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([chatId])
+  @@index([senderId])
+  @@index([createdAt])
+}
+
+model Favorite {
+  id           String   @id @default(uuid())
+  ownerId      String
+  owner        User     @relation("FavoriteOwner", fields: [ownerId], references: [id])
+  targetUserId String
+  targetUser   User     @relation("FavoriteTarget", fields: [targetUserId], references: [id])
+  createdAt    DateTime @default(now())
+
+  @@unique([ownerId, targetUserId])
+}
+
+// ---------------------------------------------------------------------
+// Economy: gifts, wallet, payments (prepared)
+// ---------------------------------------------------------------------
+
+model Gift {
+  id        String   @id @default(uuid())
+  name      String
+  iconUrl   String
+  coinCost  Int
+  active    Boolean  @default(true)
+  transactions GiftTransaction[]
+}
+
+model GiftTransaction {
+  id         String   @id @default(uuid())
+  giftId     String
+  gift       Gift     @relation(fields: [giftId], references: [id])
+  senderId   String
+  sender     User     @relation("GiftSender", fields: [senderId], references: [id])
+  receiverId String
+  receiver   User     @relation("GiftReceiver", fields: [receiverId], references: [id])
+  coinAmount Int
+  coinTransactionId String? @unique
+  coinTransaction   CoinTransaction? @relation(fields: [coinTransactionId], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([createdAt])
+}
+
+model Wallet {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balance   Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum TransactionType {
+  PURCHASE
+  GIFT_SENT
+  GIFT_RECEIVED
+  REFUND
+  BONUS
+  ADMIN_ADJUSTMENT
+}
+
+model CoinTransaction {
+  id           String          @id @default(uuid())
+  userId       String
+  user         User            @relation(fields: [userId], references: [id])
+  type         TransactionType
+  amount       Int
+  balanceBefore Int
+  balanceAfter Int
+  reference    String?
+  giftTransaction GiftTransaction?
+  createdAt    DateTime        @default(now())
+
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model CoinPackage {
+  id          String   @id @default(uuid())
+  name        String
+  coins       Int
+  price       Int
+  currency    String   @default("INR")
+  active      Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  payments    Payment[]
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+model Payment {
+  id              String        @id @default(uuid())
+  userId          String
+  user            User          @relation(fields: [userId], references: [id])
+  provider        String
+  providerRef     String?
+  packageId       String?
+  package         CoinPackage?  @relation(fields: [packageId], references: [id])
+  coins           Int
+  amount          Int
+  currency        String
+  status          PaymentStatus @default(PENDING)
+  idempotencyKey  String?       @unique
+  webhookPayload  String?
+  verifiedAt      DateTime?
+  metadata        String?
+  createdAt       DateTime      @default(now())
+
+  @@index([userId])
+  @@index([providerRef])
+  @@index([idempotencyKey])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ---------------------------------------------------------------------
+// Notifications, reports, moderation, sessions (prepared)
+// ---------------------------------------------------------------------
+
+enum NotificationType {
+  MATCH_FOUND
+  MESSAGE
+  GIFT
+  CALL
+  PAYMENT
+  SYSTEM
+  REPORT_UPDATE
+}
+
+model Notification {
+  id        String            @id @default(uuid())
+  userId    String
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  body      String
+  data      String?
+  read      Boolean           @default(false)
+  createdAt DateTime          @default(now())
+
+  @@index([userId])
+  @@index([read])
+  @@index([createdAt])
+}
+
+model Device {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceId   String
+  platform   String
+  pushToken  String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, deviceId])
+  @@index([pushToken])
+}
+
+enum ReportReason {
+  HARASSMENT
+  SPAM
+  SCAM
+  IMPERSONATION
+  INAPPROPRIATE_BEHAVIOR
+  ILLEGAL_CONTENT
+  UNDERAGE_SAFETY
+  OTHER
+}
+
+enum ReportStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED
+  DISMISSED
+}
+
+model Report {
+  id             String       @id @default(uuid())
+  reporterId     String
+  reporter       User         @relation("Reporter", fields: [reporterId], references: [id])
+  targetUserId   String
+  targetUser     User         @relation("Reported", fields: [targetUserId], references: [id])
+  targetType     String
+  targetId       String?
+  reason         ReportReason
+  description    String?
+  status         ReportStatus @default(OPEN)
+  assignedToId   String?
+  assignedTo     User?        @relation("ReportAssignee", fields: [assignedToId], references: [id])
+  internalNotes  String?
+  resolution     String?
+  resolvedAt     DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([status])
+  @@index([targetUserId])
+  @@index([assignedToId])
+  @@index([reporterId])
+  @@index([createdAt])
+}
+
+model Block {
+  id         String   @id @default(uuid())
+  blockerId  String
+  blocker    User     @relation("Blocker", fields: [blockerId], references: [id])
+  blockedId  String
+  blocked    User     @relation("Blocked", fields: [blockedId], references: [id])
+  expiresAt  DateTime?
+  createdAt  DateTime @default(now())
+
+  @@unique([blockerId, blockedId])
+  @@index([blockerId])
+  @@index([blockedId])
+}
+
+model UserSession {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceId  String?
+  ipAddress String?
+  refreshToken String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model UserBan {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reason    String
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model ModerationAction {
+  id            String   @id @default(uuid())
+  moderatorId   String
+  moderator     User     @relation("Moderator", fields: [moderatorId], references: [id])
+  targetUserId  String
+  targetUser    User     @relation("ModeratedTarget", fields: [targetUserId], references: [id])
+  action        String
+  reason        String
+  note          String?
+  createdAt     DateTime @default(now())
+
+  @@index([moderatorId])
+  @@index([targetUserId])
+  @@index([createdAt])
+}
