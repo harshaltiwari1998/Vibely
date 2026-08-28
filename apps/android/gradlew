@@ -1,0 +1,17 @@
+#!/bin/sh
+# Gradle wrapper script for Unix
+APP_NAME="Gradle"
+GRADLE_VERSION="8.4"
+DIST_URL="https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip"
+GRADLE_USER_HOME="${GRADLE_USER_HOME:-$HOME/.gradle}"
+WRAPPER_JAR="$GRADLE_USER_HOME/wrapper/dists/gradle-${GRADLE_VERSION}-bin"
+
+if [ -f "$WRAPPER_JAR/gradle-${GRADLE_VERSION}/lib/gradle-launcher-${GRADLE_VERSION}.jar" ]; then
+    java -jar "$WRAPPER_JAR/gradle-${GRADLE_VERSION}/lib/gradle-launcher-${GRADLE_VERSION}.jar" "$@"
+else
+    echo "Downloading Gradle ${GRADLE_VERSION}..."
+    mkdir -p "$GRADLE_USER_HOME/wrapper/dists"
+    curl -sL "$DIST_URL" -o "$GRADLE_USER_HOME/gradle-${GRADLE_VERSION}-bin.zip"
+    unzip -q "$GRADLE_USER_HOME/gradle-${GRADLE_VERSION}-bin.zip" -d "$GRADLE_USER_HOME/wrapper/dists"
+    java -jar "$WRAPPER_JAR/gradle-${GRADLE_VERSION}/lib/gradle-launcher-${GRADLE_VERSION}.jar" "$@"
+fi
