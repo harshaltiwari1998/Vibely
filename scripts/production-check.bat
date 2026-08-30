@@ -1,5 +1,6 @@
 @echo off
 chcp 65001 >nul
+set PATH=C:\Program Files\nodejs;C:\Program Files\Docker\Docker\resources\bin;C:\Program Files\Git\cmd;%PATH%
 echo ======================================
 echo Vibely Production Readiness Check
 echo ======================================
