@@ -60,7 +60,7 @@
     <!-- Notifications -->
     <string name="notifications_title">Notifications</string>
     <string name="notifications_mark_all_read">Mark all as read</string>
-    <string name="notifications_no_notifications">You're all caught up.</string>
+    <string name="notifications_no_notifications">You\'re all caught up.</string>
     <string name="notifications_mark_read">Mark as read</string>
 
     <!-- History -->

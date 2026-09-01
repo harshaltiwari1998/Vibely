@@ -4,10 +4,6 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { PresenceService } from "./presence.service";
 import { RealtimeGateway } from "./realtime.gateway";
 import { SignalingGateway } from "./signaling.gateway";
-import { MatchingService } from "../modules/matching/matching.service";
-import { CallsService } from "../modules/calls/calls.service";
-import { ChatService } from "../modules/chat/chat.service";
-import { GiftsService } from "../modules/gifts/gifts.service";
 
 @Module({
   imports: [
@@ -19,7 +15,7 @@ import { GiftsService } from "../modules/gifts/gifts.service";
       }),
     }),
   ],
-  providers: [PresenceService, RealtimeGateway, SignalingGateway, MatchingService, CallsService, ChatService, GiftsService],
+  providers: [PresenceService, RealtimeGateway, SignalingGateway],
   exports: [PresenceService],
 })
 export class RealtimeModule {}

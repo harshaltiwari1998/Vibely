@@ -3,7 +3,7 @@ import { PrismaService } from "../../database/prisma.service";
 import { RedisService } from "../../cache/redis.service";
 import { RealtimeGateway } from "../../realtime/realtime.gateway";
 import { RealtimeEvent } from "@vibely/types";
-import { createLogger, SECURITY, ageFromDateOfBirth } from "@vibely/shared";
+import { createLogger, ageFromDateOfBirth } from "@vibely/shared";
 
 const logger = createLogger("MatchingService");
 
@@ -114,8 +114,8 @@ export class MatchingService {
     await this.addExclusion(userId, otherUserId);
     await this.addExclusion(otherUserId, userId);
 
-    this.gateway.server.to(userId).emit(RealtimeEvent.MatchDecline, { matchId });
-    this.gateway.server.to(otherUserId).emit(RealtimeEvent.MatchDecline, { matchId });
+      this.gateway.server.to(userId).emit(RealtimeEvent.MatchDecline, { matchId });
+      this.gateway.server.to(otherUserId).emit(RealtimeEvent.MatchDecline, { matchId });
 
     return { success: true };
   }
@@ -134,8 +134,8 @@ export class MatchingService {
     await this.addExclusion(userId, otherUserId);
     await this.addExclusion(otherUserId, userId);
 
-    this.gateway.server.to(userId).emit(RealtimeEvent.MatchCancelled, { matchId, reason: "skipped" });
-    this.gateway.server.to(otherUserId).emit(RealtimeEvent.MatchCancelled, { matchId, reason: "peer skipped" });
+this.gateway.server.to(userId).emit(RealtimeEvent.MatchCancelled, { matchId, reason: "skipped" });
+      this.gateway.server.to(otherUserId).emit(RealtimeEvent.MatchCancelled, { matchId, reason: "peer skipped" });
 
     return { success: true };
   }
