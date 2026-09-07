@@ -15,7 +15,7 @@ export interface BrandConfig {
 }
 
 const DEFAULT_BRAND: BrandConfig = {
-  name: "Vibely",
+  name: "Jholamet",
   tagline: "Meet. Chat. Connect.",
   allowEnvOverride: true,
 };
@@ -24,7 +24,9 @@ const DEFAULT_BRAND: BrandConfig = {
  * Resolve the active brand configuration.
  * Honours APP_NAME / APP_TAGLINE environment overrides when allowed.
  */
-export function resolveBrand(env: Record<string, string | undefined> = process.env): BrandConfig {
+const runtimeEnv = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env ?? {};
+
+export function resolveBrand(env: Record<string, string | undefined> = runtimeEnv): BrandConfig {
   const name = DEFAULT_BRAND.allowEnvOverride && env.APP_NAME ? env.APP_NAME : DEFAULT_BRAND.name;
   const tagline =
     DEFAULT_BRAND.allowEnvOverride && env.APP_TAGLINE ? env.APP_TAGLINE : DEFAULT_BRAND.tagline;

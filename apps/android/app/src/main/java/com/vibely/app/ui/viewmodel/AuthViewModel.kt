@@ -21,23 +21,24 @@ class AuthViewModel(private val repository: FakeRepository = FakeRepository()) :
     private val _state = MutableStateFlow<AuthState>(AuthState.Idle)
     val state: StateFlow<AuthState> = _state.asStateFlow()
 
-    private val _phone = MutableStateFlow("")
-    val phone: StateFlow<String> = _phone.asStateFlow()
+    private val _email = MutableStateFlow("")
+    val email: StateFlow<String> = _email.asStateFlow()
 
     private val _otp = MutableStateFlow("")
     val otp: StateFlow<String> = _otp.asStateFlow()
 
-    fun onPhoneChange(value: String) { _phone.value = value }
+    fun onEmailChange(value: String) { _email.value = value }
     fun onOtpChange(value: String) { _otp.value = value }
 
     fun sendOtp() {
         viewModelScope.launch {
             _state.value = AuthState.Loading
             kotlinx.coroutines.delay(1200)
-            if (_phone.value.length >= 10) {
+            _otp.value = "1234"
+            if (_email.value.contains("@")) {
                 _state.value = AuthState.OtpSent
             } else {
-                _state.value = AuthState.Error("Enter a valid phone number")
+                _state.value = AuthState.Error("Enter a valid email")
             }
         }
     }

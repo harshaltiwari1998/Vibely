@@ -137,12 +137,13 @@ export function WalletPage() {
   };
 
   return (
-    <Page title="Wallet">
-      <div className="card space-y-4">
-        <div>
-          <p className="text-sm text-gray-500">Coin balance</p>
-          <p className="text-4xl font-bold">{balance ?? "—"}</p>
-        </div>
+    <Page title="">
+      <div className="-mx-4 -mt-5 bg-gradient-to-r from-[#b13bf0] to-[#9350f5] px-6 py-8 text-center text-white md:mx-0 md:rounded-lg">
+        <h1 className="text-2xl font-bold">My Wallet</h1>
+        <p className="mt-4 text-sm">Diamond balance: <span className="text-3xl font-black">{balance ?? "—"} 💎</span></p>
+      </div>
+      <div className="card mt-4 flex items-center justify-between">
+        <p className="text-sm text-gray-500">Refresh your balance and packages</p>
         <button className="btn-secondary" onClick={load} disabled={loading}>
           {loading ? "Refreshing..." : "Refresh"}
         </button>
@@ -158,7 +159,7 @@ export function WalletPage() {
       )}
 
       <div className="card mt-4">
-        <h3 className="mb-3 text-lg font-semibold">Buy Coins</h3>
+        <h3 className="mb-3 text-lg font-black">Weekly Special Offers</h3>
         {packages.length === 0 && <p className="text-sm text-gray-400">No packages available.</p>}
         <div className="grid gap-3 sm:grid-cols-3">
           {packages.map((pkg) => (
@@ -166,10 +167,10 @@ export function WalletPage() {
               key={pkg.id}
               onClick={() => initiatePayment(pkg)}
               disabled={paymentStatus === "pending" || paymentStatus === "processing"}
-              className="card text-left hover:border-brand-500"
+              className="rounded-2xl bg-white p-4 text-center shadow-sm ring-1 ring-black/5 hover:ring-[#9350f5]"
             >
-              <div className="text-2xl font-bold">{pkg.coins} coins</div>
-              <div className="text-sm text-gray-500">₹{pkg.price} {pkg.currency}</div>
+              <div className="text-lg font-black">💎 {pkg.coins}</div>
+              <div className="mt-2 inline-block rounded-full bg-[#e64aa0] px-3 py-1 text-xs font-bold text-white">₹{pkg.price} {pkg.currency}</div>
             </button>
           ))}
         </div>

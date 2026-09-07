@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Wallet
 import androidx.compose.material3.Badge
@@ -70,6 +71,11 @@ import com.vibely.app.ui.viewmodel.DiscoverViewModel
 import com.vibely.app.ui.viewmodel.HomeViewModel
 import com.vibely.app.ui.viewmodel.MatchViewModel
 import com.vibely.app.ui.wallet.WalletScreen
+import com.vibely.app.ui.tasks.TaskCenterScreen
+import com.vibely.app.ui.invitation.InvitationScreen
+import com.vibely.app.ui.party.PartyScreen
+import com.vibely.app.ui.messages.MessageListScreen
+import com.vibely.app.ui.search.SearchScreen
 
 data class BottomItem(val label: String, val icon: ImageVector, val route: String, val badge: Int? = null)
 
@@ -77,16 +83,10 @@ data class BottomItem(val label: String, val icon: ImageVector, val route: Strin
 @Composable
 fun MainScreen(navController: NavHostController) {
     val items = listOf(
-        BottomItem("Home", Icons.Filled.Home, Screen.Home.route),
-        BottomItem("Discover", Icons.Filled.PhotoLibrary, Screen.Discover.route),
         BottomItem("Match", Icons.Filled.Favorite, Screen.Match.route),
-        BottomItem("Call", Icons.Filled.Call, Screen.Call.route),
-        BottomItem("Chat", Icons.AutoMirrored.Filled.Send, Screen.Chat.createRoute("me"), badge = 2),
-        BottomItem("Wallet", Icons.Filled.Wallet, Screen.Wallet.route),
-        BottomItem("Gifts", Icons.Filled.CardGiftcard, Screen.Gifts.route),
-        BottomItem("History", Icons.AutoMirrored.Filled.List, Screen.History.route),
-        BottomItem("Notifications", Icons.Filled.Notifications, Screen.Notifications.route, badge = 3),
-        BottomItem("Settings", Icons.Filled.Settings, Screen.Settings.route),
+        BottomItem("Live", Icons.Filled.PhotoLibrary, Screen.Discover.route),
+        BottomItem("Search", Icons.Filled.Search, Screen.Search.route),
+        BottomItem("Message", Icons.AutoMirrored.Filled.Send, Screen.Messages.route, badge = 2),
         BottomItem("Profile", Icons.Filled.AccountCircle, Screen.Profile.route)
     )
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -158,7 +158,7 @@ fun MainScreen(navController: NavHostController) {
                 Box(modifier = Modifier.fillMaxSize().padding(padding).background(Color(0xFFF8FAFC))) {
                     androidx.navigation.compose.NavHost(
                         navController = navController,
-                        startDestination = Screen.Home.route
+                        startDestination = Screen.Match.route
                     ) {
                         composable(Screen.Home.route) { HomeScreen(viewModel = com.vibely.app.ui.viewmodel.HomeViewModel()) }
                         composable(Screen.Discover.route) { DiscoverScreen(viewModel = com.vibely.app.ui.viewmodel.DiscoverViewModel()) }
@@ -173,7 +173,19 @@ fun MainScreen(navController: NavHostController) {
                         composable(Screen.History.route) { HistoryScreen(viewModel = com.vibely.app.ui.viewmodel.CallViewModel()) }
                         composable(Screen.Notifications.route) { NotificationsScreen() }
                         composable(Screen.Settings.route) { SettingsScreen() }
-                        composable(Screen.Profile.route) { ProfileScreen() }
+                        composable(Screen.Profile.route) {
+                            ProfileScreen(
+                                onOpenTasks = { navController.navigate(Screen.Tasks.route) },
+                                onOpenInvitation = { navController.navigate(Screen.Invitation.route) }
+                            )
+                        }
+                        composable(Screen.Tasks.route) { TaskCenterScreen() }
+                        composable(Screen.Invitation.route) { InvitationScreen() }
+                        composable(Screen.Party.route) { PartyScreen() }
+                        composable(Screen.Messages.route) {
+                            MessageListScreen(onOpenChat = { name -> navController.navigate(Screen.Chat.createRoute(name)) })
+                        }
+                        composable(Screen.Search.route) { SearchScreen(viewModel = com.vibely.app.ui.viewmodel.DiscoverViewModel()) }
                     }
                 }
             }

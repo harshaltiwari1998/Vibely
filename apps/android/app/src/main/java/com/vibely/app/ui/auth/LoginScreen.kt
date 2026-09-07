@@ -28,21 +28,24 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.widget.Toast
 
 @Composable
 fun LoginScreen(
     onNavigateToSignup: () -> Unit,
-    onLoginSuccess: () -> Unit
+    onLoginSuccess: (String) -> Unit
 ) {
-    var phone by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
 
     Column(
         modifier = Modifier
@@ -52,14 +55,14 @@ fun LoginScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("Vibely", fontSize = 36.sp, fontWeight = FontWeight.Bold, color = Color(0xFF7C3AED))
+        Text("Jholamet", fontSize = 36.sp, fontWeight = FontWeight.Bold, color = Color(0xFF7C3AED))
         Spacer(modifier = Modifier.height(8.dp))
         Text("Meet. Chat. Connect.", color = Color(0xFF6B7280))
         Spacer(modifier = Modifier.height(32.dp))
         OutlinedTextField(
-            value = phone,
-            onValueChange = { phone = it },
-            label = { Text("Phone number") },
+            value = email,
+            onValueChange = { email = it },
+            label = { Text("Email") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true
         )
@@ -87,11 +90,12 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(20.dp))
         Button(
             onClick = {
-                if (phone.isBlank() || password.isBlank()) {
-                    error = "Enter phone and password"
+                if (email.isBlank() || password.isBlank()) {
+                    error = "Enter email and password"
                 } else {
                     error = null
-                    onLoginSuccess()
+                    Toast.makeText(context, "Login successful", Toast.LENGTH_SHORT).show()
+                    onLoginSuccess(email)
                 }
             },
             modifier = Modifier.fillMaxWidth().height(52.dp),

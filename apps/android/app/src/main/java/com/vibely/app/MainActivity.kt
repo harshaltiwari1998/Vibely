@@ -23,13 +23,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             val navController = rememberNavController()
             val authViewModel = AuthViewModel()
-            val state = authViewModel.state.value
             Surface(modifier = Modifier.fillMaxSize()) {
-                if (state is AuthState.Success) {
-                    VibelyNavGraph(navController = navController, authViewModel = authViewModel)
-                } else {
-                    VibelyNavGraph(navController = navController, authViewModel = authViewModel)
-                }
+                VibelyNavGraph(navController = navController, authViewModel = authViewModel)
             }
         }
     }

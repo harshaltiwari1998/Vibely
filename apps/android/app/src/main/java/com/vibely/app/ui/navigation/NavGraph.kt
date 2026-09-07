@@ -19,6 +19,11 @@ import com.vibely.app.ui.match.MatchScreen
 import com.vibely.app.ui.notifications.NotificationsScreen
 import com.vibely.app.ui.profile.ProfileScreen
 import com.vibely.app.ui.settings.SettingsScreen
+import com.vibely.app.ui.tasks.TaskCenterScreen
+import com.vibely.app.ui.invitation.InvitationScreen
+import com.vibely.app.ui.party.PartyScreen
+import com.vibely.app.ui.messages.MessageListScreen
+import com.vibely.app.ui.search.SearchScreen
 import com.vibely.app.ui.viewmodel.AuthViewModel
 import com.vibely.app.ui.viewmodel.CallViewModel
 import com.vibely.app.ui.viewmodel.ChatViewModel
@@ -37,9 +42,10 @@ fun VibelyNavGraph(navController: NavHostController, authViewModel: AuthViewMode
             } else {
                 LoginScreen(
                     onNavigateToSignup = { navController.navigate(Screen.Signup.route) },
-                    onLoginSuccess = {
+                    onLoginSuccess = { enteredEmail ->
+                        authViewModel.onEmailChange(enteredEmail)
                         authViewModel.sendOtp()
-                        navController.navigate(Screen.Otp.createRoute("user"))
+                        navController.navigate(Screen.Otp.createRoute(enteredEmail))
                     }
                 )
             }
@@ -47,22 +53,26 @@ fun VibelyNavGraph(navController: NavHostController, authViewModel: AuthViewMode
         composable(Screen.Login.route) {
             LoginScreen(
                 onNavigateToSignup = { navController.navigate(Screen.Signup.route) },
-                onLoginSuccess = {
+                onLoginSuccess = { enteredEmail ->
+                    authViewModel.onEmailChange(enteredEmail)
                     authViewModel.sendOtp()
-                    navController.navigate(Screen.Otp.createRoute("user"))
+                    navController.navigate(Screen.Otp.createRoute(enteredEmail))
                 }
             )
         }
         composable(Screen.Signup.route) {
-            SignupScreen(onSignupSuccess = { navController.popBackStack() })
+            SignupScreen(onSignupSuccess = { enteredEmail ->
+                navController.navigate(Screen.Otp.createRoute(enteredEmail))
+            })
         }
         composable(
             Screen.Otp.route,
-            arguments = listOf(navArgument("phone") { type = NavType.StringType })
+            arguments = listOf(navArgument("email") { type = NavType.StringType })
         ) { backStackEntry ->
-            val phone = backStackEntry.arguments?.getString("phone") ?: ""
+            val email = backStackEntry.arguments?.getString("email") ?: ""
             OtpScreen(
-                phone = phone,
+                email = email,
+                viewModel = authViewModel,
                 onOtpSuccess = {
                     navController.navigate(Screen.Main.route) {
                         popUpTo(Screen.Auth.route) { inclusive = true }
@@ -108,7 +118,25 @@ fun VibelyNavGraph(navController: NavHostController, authViewModel: AuthViewMode
             SettingsScreen()
         }
         composable(Screen.Profile.route) {
-            ProfileScreen()
+            ProfileScreen(
+                onOpenTasks = { navController.navigate(Screen.Tasks.route) },
+                onOpenInvitation = { navController.navigate(Screen.Invitation.route) }
+            )
+        }
+        composable(Screen.Tasks.route) {
+            TaskCenterScreen()
+        }
+        composable(Screen.Invitation.route) {
+            InvitationScreen()
+        }
+        composable(Screen.Party.route) {
+            PartyScreen()
+        }
+        composable(Screen.Messages.route) {
+            MessageListScreen(onOpenChat = { name -> navController.navigate(Screen.Chat.createRoute(name)) })
+        }
+        composable(Screen.Search.route) {
+            SearchScreen(viewModel = DiscoverViewModel())
         }
     }
 }

@@ -26,6 +26,10 @@ import { AdminGiftsPage } from "./pages/admin/AdminGiftsPage";
 import { AdminModerationPage } from "./pages/admin/AdminModerationPage";
 import { AdminAnalyticsPage } from "./pages/admin/AdminAnalyticsPage";
 import { AdminSettingsPage } from "./pages/admin/AdminSettingsPage";
+import { TaskCenterPage } from "./pages/TaskCenterPage";
+import { InvitationPage } from "./pages/InvitationPage";
+import { SearchPage } from "./pages/SearchPage";
+import { ProfileEditPage } from "./pages/ProfileEditPage";
 
 function Protected({ element }: { element: JSX.Element }) {
   return (
@@ -50,12 +54,16 @@ export function App() {
         <Route path="/call" element={<Protected element={<CallPage />} />} />
         <Route path="/chat" element={<Protected element={<ChatPage />} />} />
         <Route path="/profile" element={<Protected element={<ProfilePage />} />} />
+        <Route path="/profile/edit" element={<Protected element={<ProfileEditPage />} />} />
+        <Route path="/search" element={<Protected element={<SearchPage />} />} />
         <Route path="/wallet" element={<Protected element={<WalletPage />} />} />
         <Route path="/gifts" element={<Protected element={<GiftsPage />} />} />
         <Route path="/favorites" element={<Protected element={<FavoritesPage />} />} />
         <Route path="/history" element={<Protected element={<HistoryPage />} />} />
         <Route path="/notifications" element={<Protected element={<NotificationsPage />} />} />
         <Route path="/settings" element={<Protected element={<SettingsPage />} />} />
+        <Route path="/tasks" element={<Protected element={<TaskCenterPage />} />} />
+        <Route path="/invitation" element={<Protected element={<InvitationPage />} />} />
 
         <Route path="/admin" element={<Protected element={<AdminDashboardPage />} />} />
         <Route path="/admin/users" element={<Protected element={<AdminUsersPage />} />} />

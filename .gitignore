@@ -49,3 +49,7 @@ Thumbs.db
 # Coverage
 coverage/
 .nyc_output/
+
+# Android Gradle
+.gradle/
+

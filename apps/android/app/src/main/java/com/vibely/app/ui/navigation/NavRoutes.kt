@@ -4,8 +4,8 @@ sealed class Screen(val route: String) {
     data object Auth : Screen("auth")
     data object Login : Screen("login")
     data object Signup : Screen("signup")
-    data object Otp : Screen("otp/{phone}") {
-        fun createRoute(phone: String) = "otp/$phone"
+    data object Otp : Screen("otp/{email}") {
+        fun createRoute(email: String) = "otp/$email"
     }
     data object Main : Screen("main")
     data object Home : Screen("home")
@@ -21,4 +21,9 @@ sealed class Screen(val route: String) {
     data object Notifications : Screen("notifications")
     data object Settings : Screen("settings")
     data object Profile : Screen("profile")
+    data object Tasks : Screen("tasks")
+    data object Invitation : Screen("invitation")
+    data object Party : Screen("party")
+    data object Messages : Screen("messages")
+    data object Search : Screen("search")
 }

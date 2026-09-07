@@ -65,17 +65,25 @@ export function SettingsPage() {
   };
 
   return (
-    <Page title={t.navigation.settings}>
-      <form onSubmit={(e) => { e.preventDefault(); setLanguage(language === "en" ? "hi" : "en"); }} className="card space-y-3">
-        <h2 className="text-lg font-semibold">Language</h2>
-        <select className="input" value={language} onChange={(e) => setLanguage(e.target.value as "en" | "hi")}>
-          <option value="en">English</option>
-          <option value="hi">Hindi</option>
-        </select>
-      </form>
+    <Page title="">
+      <section className="mx-auto -mt-1 max-w-3xl">
+        <h1 className="border-b border-gray-100 pb-5 text-center text-3xl font-medium text-gray-900">{t.navigation.settings}</h1>
+        <div className="mt-3 divide-y divide-gray-100 bg-white">
+          <label className="flex cursor-pointer items-center justify-between px-5 py-5 text-xl text-gray-700">
+            <span>App language</span>
+            <select className="bg-transparent text-right text-base text-gray-400 outline-none" value={language} onChange={(e) => setLanguage(e.target.value as "en" | "hi")}>
+              <option value="en">English</option><option value="hi">Hindi</option>
+            </select>
+          </label>
+          <a href="#preferences" className="flex items-center justify-between px-5 py-5 text-xl text-gray-700"><span>Match preferences</span><span className="text-gray-300">›</span></a>
+          <a href="#account" className="flex items-center justify-between px-5 py-5 text-xl text-gray-700"><span>Account</span><span className="text-gray-300">›</span></a>
+          <button type="button" onClick={() => setMsg("Cache cleared") } className="flex w-full items-center justify-between px-5 py-5 text-left text-xl text-gray-700"><span>Clear cache</span><span className="text-gray-300">›</span></button>
+          <a href="/invitation" className="flex items-center justify-between px-5 py-5 text-xl text-gray-700"><span>Invite rewards</span><span className="text-gray-300">›</span></a>
+        </div>
+        {msg && <p className="mt-3 px-5 text-sm text-[#a344e9]">{msg}</p>}
 
-      <form onSubmit={savePrefs} className="card mt-6 space-y-3">
-        <h2 className="text-lg font-semibold">Discovery preferences</h2>
+      <form id="preferences" onSubmit={savePrefs} className="mt-5 rounded-lg bg-white p-5 shadow-sm ring-1 ring-black/5">
+        <h2 className="text-lg font-bold">Match preferences</h2>
         <label className="block text-sm text-gray-600">Preferred gender</label>
         <select className="input" value={prefs.preferredGender} onChange={(e) => setPrefs({ ...prefs, preferredGender: e.target.value })}>
           <option value="">Any</option>
@@ -90,16 +98,16 @@ export function SettingsPage() {
         </div>
         <input className="input" placeholder="Preferred countries (comma separated)" value={prefs.preferredCountries} onChange={(e) => setPrefs({ ...prefs, preferredCountries: e.target.value })} />
         <input className="input" placeholder="Preferred languages (comma separated)" value={prefs.preferredLanguages} onChange={(e) => setPrefs({ ...prefs, preferredLanguages: e.target.value })} />
-        <button className="btn-primary" type="submit" disabled={saving}>{saving ? "Saving..." : "Save preferences"}</button>
-        {msg && <p className="text-sm text-brand-600">{msg}</p>}
+        <button className="mt-3 rounded-full bg-[#f42b83] px-5 py-2 text-sm font-bold text-white" type="submit" disabled={saving}>{saving ? "Saving..." : "Save preferences"}</button>
       </form>
 
-      <form onSubmit={changePassword} className="card mt-6 space-y-3">
-        <h2 className="text-lg font-semibold">Change password</h2>
+      <form id="account" onSubmit={changePassword} className="mt-5 rounded-lg bg-white p-5 shadow-sm ring-1 ring-black/5">
+        <h2 className="text-lg font-bold">Change password</h2>
         <input className="input" type="password" placeholder="Current password" value={pw.oldPassword} onChange={(e) => setPw({ ...pw, oldPassword: e.target.value })} />
         <input className="input" type="password" placeholder="New password" value={pw.newPassword} onChange={(e) => setPw({ ...pw, newPassword: e.target.value })} />
-        <button className="btn-primary" type="submit" disabled={saving}>{saving ? "Updating..." : "Change password"}</button>
+        <button className="mt-3 rounded-full bg-[#f42b83] px-5 py-2 text-sm font-bold text-white" type="submit" disabled={saving}>{saving ? "Updating..." : "Change password"}</button>
       </form>
+      </section>
     </Page>
   );
 }
