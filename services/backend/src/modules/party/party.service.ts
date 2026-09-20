@@ -35,6 +35,9 @@ export class PartyService {
 
     const host = await this.prisma.user.findUnique({ where: { id: hostId } });
     if (!host) throw new NotFoundException("Host not found");
+    if (host.status === "RESTRICTED" || host.status === "SUSPENDED" || host.status === "BANNED") {
+      throw new ForbiddenException("Your account cannot start a party room right now");
+    }
 
     const seatCount = Math.min(MAX_SEATS, Math.max(MIN_SEATS, dto.seatCount ?? 8));
 

@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
+import { forwardRef, Inject, Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../../database/prisma.service";
 import { WalletService } from "../wallet/wallet.service";
 import { VipService } from "../vip/vip.service";
@@ -46,6 +46,11 @@ export class GiftsService {
     const { receiverId, giftId } = dto;
     if (senderId === receiverId) {
       throw new BadRequestException("Cannot send gift to yourself");
+    }
+
+    const sender = await this.prisma.user.findUnique({ where: { id: senderId }, select: { status: true } });
+    if (sender && (sender.status === "RESTRICTED" || sender.status === "SUSPENDED" || sender.status === "BANNED")) {
+      throw new ForbiddenException("Your account cannot send gifts right now");
     }
 
     const gift = await this.prisma.gift.findUnique({

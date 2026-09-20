@@ -32,6 +32,9 @@ export class LiveService {
 
     const host = await this.prisma.user.findUnique({ where: { id: hostId } });
     if (!host) throw new NotFoundException("Host not found");
+    if (host.status === "RESTRICTED" || host.status === "SUSPENDED" || host.status === "BANNED") {
+      throw new ForbiddenException("Your account cannot go live right now");
+    }
 
     const room = await this.prisma.liveRoom.create({
       data: {
