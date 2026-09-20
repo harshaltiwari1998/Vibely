@@ -7,6 +7,7 @@ import { ConfigService } from "@nestjs/config";
 import { RealtimeGateway } from "../../realtime/realtime.gateway";
 import { RealtimeEvent } from "@vibely/types";
 import { TransactionType } from "@prisma/client";
+import { AutoModerationService } from "../auto-moderation/auto-moderation.service";
 
 const logger = new Logger("PaymentsService");
 
@@ -27,6 +28,7 @@ export class PaymentsService {
     private readonly wallet: WalletService,
     private readonly configService: ConfigService,
     private readonly gateway: RealtimeGateway,
+    private readonly autoModeration: AutoModerationService,
   ) {
     const providerName = this.configService.get<string>("payments.provider", "razorpay");
     if (providerName === "razorpay") {
@@ -214,6 +216,7 @@ export class PaymentsService {
         currency: payment.currency,
         coins: payment.coins,
       });
+      await this.autoModeration.checkUserRisk(payment.userId);
     } else if (verification.status === "FAILED") {
       await this.prisma.payment.update({
         where: { id: paymentId },
@@ -294,6 +297,10 @@ export class PaymentsService {
         });
       }
     });
+
+    if (newStatus === "SUCCEEDED") {
+      await this.autoModeration.checkUserRisk(existingPayment.userId);
+    }
 
     logger.log("Webhook processed", { paymentId: existingPayment.id, status: newStatus });
     return { success: true };

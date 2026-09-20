@@ -5,6 +5,7 @@ import { RealtimeEvent } from "@vibely/types";
 import { ReportReason, ReportStatus, UserStatus } from "@prisma/client";
 import { CreateReportDto, UpdateReportDto } from "@vibely/types";
 import { createLogger, SECURITY, ageFromDateOfBirth } from "@vibely/shared";
+import { AutoModerationService } from "../auto-moderation/auto-moderation.service";
 
 const logger = createLogger("ReportsService");
 
@@ -12,6 +13,7 @@ const logger = createLogger("ReportsService");
 export class ReportsService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly autoModeration: AutoModerationService,
     @Optional() private readonly gateway?: RealtimeGateway,
   ) {}
 
@@ -53,6 +55,8 @@ export class ReportsService {
         body: `A report has been filed against you for: ${dto.reason}`,
       });
     }
+
+    await this.autoModeration.checkReportVolume(dto.targetUserId);
 
     return report;
   }
