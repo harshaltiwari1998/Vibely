@@ -3,6 +3,7 @@ import { JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
 import { PrismaService } from "../../database/prisma.service";
 import { RedisService } from "../../cache/redis.service";
+import { ReferralsService } from "../referrals/referrals.service";
 import * as bcrypt from "bcryptjs";
 import { Role } from "../../common/constants/roles";
 import { createLogger, SECURITY, ageFromDateOfBirth, isValidPassword } from "@vibely/shared";
@@ -25,6 +26,7 @@ export class AuthService {
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
     private readonly redis: RedisService,
+    private readonly referrals: ReferralsService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -77,6 +79,10 @@ export class AuthService {
     });
 
     await this.redis.set(`verify:${verificationToken}`, user.id, 86400);
+
+    if (dto.referralCode) {
+      await this.referrals.applyReferral(user.id, dto.referralCode);
+    }
 
     const tokens = this.issueTokens(user.id, user.email, Role.User);
     await this.createSession(user.id, tokens.refreshToken);

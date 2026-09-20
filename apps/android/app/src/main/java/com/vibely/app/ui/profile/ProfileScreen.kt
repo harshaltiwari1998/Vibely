@@ -43,18 +43,22 @@ fun ProfileScreen(
     onOpenInvitation: () -> Unit = {},
     onOpenWallet: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
-    onOpenVip: () -> Unit = {}
+    onOpenVip: () -> Unit = {},
+    onOpenLevel: () -> Unit = {},
+    onOpenBadges: () -> Unit = {},
+    onOpenFamily: () -> Unit = {},
+    onOpenMall: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val balanceState by walletViewModel.balance.collectAsState()
     val balanceText = (balanceState as? UiState.Success)?.data?.toString() ?: "…"
     val menuItems = listOf(
         ProfileMenuItem("Task", "tasks"),
-        ProfileMenuItem("My level"),
-        ProfileMenuItem("My Badge"),
-        ProfileMenuItem("Family"),
+        ProfileMenuItem("My level", "level"),
+        ProfileMenuItem("My Badge", "badges"),
+        ProfileMenuItem("Family", "family"),
         ProfileMenuItem("My invitation", "invitation"),
-        ProfileMenuItem("Mall"),
+        ProfileMenuItem("Mall", "mall"),
         ProfileMenuItem("My profile", "settings"),
         ProfileMenuItem("My chat price")
     )
@@ -91,6 +95,10 @@ fun ProfileScreen(
                             "tasks" -> onOpenTasks()
                             "invitation" -> onOpenInvitation()
                             "settings" -> onOpenSettings()
+                            "level" -> onOpenLevel()
+                            "badges" -> onOpenBadges()
+                            "family" -> onOpenFamily()
+                            "mall" -> onOpenMall()
                             else -> Toast.makeText(context, "${item.label} is coming soon", Toast.LENGTH_SHORT).show()
                         }
                     }

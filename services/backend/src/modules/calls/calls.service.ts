@@ -4,14 +4,19 @@ import { RedisService } from "../../cache/redis.service";
 import { RealtimeGateway } from "../../realtime/realtime.gateway";
 import { RealtimeEvent } from "@vibely/types";
 import { createLogger } from "@vibely/shared";
+import { LevelsService } from "../levels/levels.service";
 
 const logger = createLogger("CallsService");
+
+/** Minimum call length, in seconds, before either participant earns XP for it. */
+const MIN_XP_CALL_DURATION_SECONDS = 30;
 
 @Injectable()
 export class CallsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly redis: RedisService,
+    private readonly levels: LevelsService,
     @Inject(forwardRef(() => RealtimeGateway)) private readonly gateway: RealtimeGateway,
   ) {}
 
@@ -133,6 +138,10 @@ export class CallsService {
       where: { callId, userId, leftAt: null },
       data: { leftAt: endedAt },
     });
+
+    if (durationSeconds >= MIN_XP_CALL_DURATION_SECONDS) {
+      await Promise.all([this.levels.awardXp(call.initiatorId, 15), this.levels.awardXp(call.receiverId, 15)]);
+    }
 
     const otherUserId = call.initiatorId === userId ? call.receiverId : call.initiatorId;
     this.gateway.server.to(otherUserId).emit(RealtimeEvent.CallEnded, {

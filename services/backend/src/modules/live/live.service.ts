@@ -4,6 +4,7 @@ import { AccessToken } from "livekit-server-sdk";
 import { PrismaService } from "../../database/prisma.service";
 import { createLogger } from "@vibely/shared";
 import { StartLiveDto } from "@vibely/types";
+import { LevelsService } from "../levels/levels.service";
 
 const logger = createLogger("LiveService");
 
@@ -12,6 +13,7 @@ export class LiveService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
+    private readonly levels: LevelsService,
   ) {}
 
   private async mintToken(roomId: string, userId: string, username: string, canPublish: boolean): Promise<string> {
@@ -42,6 +44,7 @@ export class LiveService {
     });
 
     const token = await this.mintToken(room.id, hostId, host.username, true);
+    await this.levels.awardXp(hostId, 20);
     logger.info("Live room started", { roomId: room.id, hostId });
     return { room, token, livekitUrl: this.config.get<string>("app.liveKit.url") };
   }

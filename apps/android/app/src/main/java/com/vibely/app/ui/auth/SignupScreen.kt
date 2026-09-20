@@ -39,6 +39,7 @@ fun SignupScreen(viewModel: AuthViewModel, onNavigateToLogin: () -> Unit) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var country by remember { mutableStateOf("India") }
+    var referralCode by remember { mutableStateOf("") }
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
 
@@ -57,6 +58,8 @@ fun SignupScreen(viewModel: AuthViewModel, onNavigateToLogin: () -> Unit) {
         OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("Email") }, modifier = Modifier.fillMaxWidth())
         Spacer(modifier = Modifier.height(12.dp))
         OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Password") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+        Spacer(modifier = Modifier.height(12.dp))
+        OutlinedTextField(value = referralCode, onValueChange = { referralCode = it }, label = { Text("Invite code (optional)") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
         if (state is AuthState.Error) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(text = (state as AuthState.Error).message, color = Color(0xFFEF4444), fontSize = 12.sp)
@@ -76,7 +79,8 @@ fun SignupScreen(viewModel: AuthViewModel, onNavigateToLogin: () -> Unit) {
                         dateOfBirth = "2000-01-01",
                         gender = "MALE",
                         country = country,
-                        language = "en"
+                        language = "en",
+                        referralCode = referralCode
                     )
                     Toast.makeText(context, "Account created", Toast.LENGTH_SHORT).show()
                 }

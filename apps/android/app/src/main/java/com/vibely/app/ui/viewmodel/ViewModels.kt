@@ -13,10 +13,14 @@ import com.vibely.app.data.remote.dto.LiveRoomResponse
 import com.vibely.app.data.remote.dto.MatchStartRequest
 import com.vibely.app.data.remote.dto.NotificationResponse
 import com.vibely.app.data.remote.dto.AddCoinsRequest
+import com.vibely.app.data.remote.dto.BlockedUserResponse
 import com.vibely.app.data.remote.dto.GiftResponse
+import com.vibely.app.data.remote.dto.ReferralInfoResponse
 import com.vibely.app.data.remote.dto.SendGiftRequest
 import com.vibely.app.data.remote.dto.SendMessageRequest
 import com.vibely.app.data.remote.dto.StartChatRequest
+import com.vibely.app.data.remote.dto.TaskClaimRequest
+import com.vibely.app.data.remote.dto.TaskResponse
 import com.vibely.app.data.remote.dto.UserResponse
 import com.vibely.app.data.remote.dto.VipPurchaseRequest
 import com.vibely.app.data.remote.dto.VipStatusResponse
@@ -490,6 +494,115 @@ class CallViewModel(private val api: ApiService) : ViewModel() {
                 }
             } catch (e: Exception) {
                 _history.value = UiState.Error(e.message ?: "Network error")
+            }
+        }
+    }
+}
+
+class TaskViewModel(private val api: ApiService) : ViewModel() {
+    private val _tasks = MutableStateFlow<UiState<List<TaskResponse>>>(UiState.Loading)
+    val tasks: StateFlow<UiState<List<TaskResponse>>> = _tasks.asStateFlow()
+
+    private val _isClaiming = MutableStateFlow(false)
+    val isClaiming: StateFlow<Boolean> = _isClaiming.asStateFlow()
+
+    private val _message = MutableStateFlow<String?>(null)
+    val message: StateFlow<String?> = _message.asStateFlow()
+
+    init { refresh() }
+
+    fun refresh() {
+        viewModelScope.launch {
+            try {
+                val resp = api.listTasks()
+                if (resp.success && resp.data != null) {
+                    _tasks.value = UiState.Success(resp.data)
+                } else {
+                    _tasks.value = UiState.Error(resp.message ?: "Failed to load tasks")
+                }
+            } catch (e: Exception) {
+                _tasks.value = UiState.Error(e.message ?: "Network error")
+            }
+        }
+    }
+
+    fun claim(type: String, onWalletChanged: () -> Unit = {}) {
+        if (_isClaiming.value) return
+        viewModelScope.launch {
+            _isClaiming.value = true
+            try {
+                val resp = api.claimTask(TaskClaimRequest(type))
+                if (resp.success && resp.data != null) {
+                    _message.value = "+${resp.data.reward} 💎 claimed!"
+                    refresh()
+                    onWalletChanged()
+                } else {
+                    _message.value = resp.message ?: "Could not claim task"
+                }
+            } catch (e: Exception) {
+                _message.value = e.message ?: "Network error"
+            } finally {
+                _isClaiming.value = false
+            }
+        }
+    }
+
+    fun consumeMessage() {
+        _message.value = null
+    }
+}
+
+class ReferralViewModel(private val api: ApiService) : ViewModel() {
+    private val _info = MutableStateFlow<UiState<ReferralInfoResponse>>(UiState.Loading)
+    val info: StateFlow<UiState<ReferralInfoResponse>> = _info.asStateFlow()
+
+    init { refresh() }
+
+    fun refresh() {
+        viewModelScope.launch {
+            try {
+                val resp = api.getReferralInfo()
+                if (resp.success && resp.data != null) {
+                    _info.value = UiState.Success(resp.data)
+                } else {
+                    _info.value = UiState.Error(resp.message ?: "Failed to load referral info")
+                }
+            } catch (e: Exception) {
+                _info.value = UiState.Error(e.message ?: "Network error")
+            }
+        }
+    }
+}
+
+class BlocklistViewModel(private val api: ApiService) : ViewModel() {
+    private val _blocked = MutableStateFlow<UiState<List<BlockedUserResponse>>>(UiState.Loading)
+    val blocked: StateFlow<UiState<List<BlockedUserResponse>>> = _blocked.asStateFlow()
+
+    init { refresh() }
+
+    fun refresh() {
+        viewModelScope.launch {
+            _blocked.value = UiState.Loading
+            try {
+                val resp = api.listBlockedUsers()
+                if (resp.success && resp.data != null) {
+                    _blocked.value = UiState.Success(resp.data)
+                } else {
+                    _blocked.value = UiState.Error(resp.message ?: "Failed to load blocked users")
+                }
+            } catch (e: Exception) {
+                _blocked.value = UiState.Error(e.message ?: "Network error")
+            }
+        }
+    }
+
+    fun unblock(userId: String) {
+        viewModelScope.launch {
+            try {
+                api.unblockUser(userId)
+                val current = (_blocked.value as? UiState.Success)?.data.orEmpty().filter { it.blocked.id != userId }
+                _blocked.value = UiState.Success(current)
+            } catch (_: Exception) {
             }
         }
     }

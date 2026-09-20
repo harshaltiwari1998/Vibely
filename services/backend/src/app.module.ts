@@ -26,6 +26,12 @@ import { FavoritesModule } from "./modules/favorites/favorites.module";
 import { BlocksModule } from "./modules/blocks/blocks.module";
 import { LiveModule } from "./modules/live/live.module";
 import { VipModule } from "./modules/vip/vip.module";
+import { TasksModule } from "./modules/tasks/tasks.module";
+import { ReferralsModule } from "./modules/referrals/referrals.module";
+import { LevelsModule } from "./modules/levels/levels.module";
+import { BadgesModule } from "./modules/badges/badges.module";
+import { MallModule } from "./modules/mall/mall.module";
+import { FamiliesModule } from "./modules/families/families.module";
 
 @Module({
   imports: [
@@ -55,6 +61,12 @@ import { VipModule } from "./modules/vip/vip.module";
     BlocksModule,
     LiveModule,
     VipModule,
+    TasksModule,
+    ReferralsModule,
+    LevelsModule,
+    BadgesModule,
+    MallModule,
+    FamiliesModule,
   ],
 })
 export class AppModule {}

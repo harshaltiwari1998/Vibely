@@ -1,4 +1,4 @@
-import { IsEmail, IsEnum, IsNotEmpty, IsString, Matches, MinLength } from "class-validator";
+import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, Matches, MinLength } from "class-validator";
 import { Gender } from "@vibely/types";
 
 export class RegisterDto {
@@ -29,6 +29,10 @@ export class RegisterDto {
   @IsString()
   @IsNotEmpty()
   language: string;
+
+  @IsOptional()
+  @IsString()
+  referralCode?: string;
 }
 
 export class LoginDto {

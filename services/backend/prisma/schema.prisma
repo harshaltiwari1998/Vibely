@@ -55,9 +55,20 @@ model User {
   status       UserStatus @default(PENDING)
   vipLevel     VipLevel   @default(NONE)
   vipExpiresAt DateTime?
+  referralCode String?    @unique
+  referredById String?
+  xp           Int        @default(0)
+  featuredBadgeId String?
+  familyId     String?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
+  referredBy     User?            @relation("Referrals", fields: [referredById], references: [id])
+  referrals      User[]           @relation("Referrals")
+  taskClaims     TaskClaim[]
+  family         Family?          @relation("FamilyMembers", fields: [familyId], references: [id], onDelete: SetNull)
+  ownedFamily    Family?          @relation("FamilyOwner")
+  mallInventory  MallInventoryItem[]
   profile        Profile?
   preferences    UserPreference?
   sessions       UserSession[]
@@ -363,6 +374,8 @@ enum TransactionType {
   ADMIN_ADJUSTMENT
   MATCH_COST
   VIP_PURCHASE
+  REFERRAL_BONUS
+  MALL_PURCHASE
 }
 
 enum VipLevel {
@@ -434,6 +447,68 @@ model Payment {
   @@index([idempotencyKey])
   @@index([status])
   @@index([createdAt])
+}
+
+model Family {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  bio       String?
+  ownerId   String   @unique
+  owner     User     @relation("FamilyOwner", fields: [ownerId], references: [id])
+  createdAt DateTime @default(now())
+
+  members   User[]   @relation("FamilyMembers")
+}
+
+enum MallItemCategory {
+  HEADWEAR
+  RIDE
+  PROFILE_DECORATION
+}
+
+model MallItem {
+  id        String           @id @default(uuid())
+  name      String
+  category  MallItemCategory
+  iconUrl   String
+  price     Int
+  active    Boolean          @default(true)
+  createdAt DateTime         @default(now())
+
+  inventory MallInventoryItem[]
+}
+
+model MallInventoryItem {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  itemId      String
+  item        MallItem @relation(fields: [itemId], references: [id])
+  equipped    Boolean  @default(false)
+  purchasedAt DateTime @default(now())
+
+  @@unique([userId, itemId])
+  @@index([userId])
+}
+
+enum TaskType {
+  DAILY_CHECKIN
+  COMPLETE_PROFILE
+  FIRST_GIFT
+  GIFT_VETERAN
+  FIRST_RECHARGE
+  GO_LIVE_ONCE
+}
+
+model TaskClaim {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taskType  TaskType
+  claimedAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([taskType])
 }
 
 // ---------------------------------------------------------------------

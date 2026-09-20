@@ -65,7 +65,8 @@ class AuthViewModel(
         dateOfBirth: String,
         gender: String,
         country: String,
-        language: String
+        language: String,
+        referralCode: String? = null
     ) {
         viewModelScope.launch {
             _state.value = AuthState.Loading
@@ -78,7 +79,8 @@ class AuthViewModel(
                         dateOfBirth = dateOfBirth,
                         gender = gender,
                         country = country,
-                        language = language
+                        language = language,
+                        referralCode = referralCode?.trim()?.takeIf { it.isNotBlank() }
                     )
                 )
                 if (response.success && response.data != null) {

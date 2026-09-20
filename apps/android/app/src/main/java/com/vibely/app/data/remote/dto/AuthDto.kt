@@ -28,7 +28,8 @@ data class RegisterRequest(
     val dateOfBirth: String,
     val gender: String,
     val country: String,
-    val language: String
+    val language: String,
+    val referralCode: String? = null
 )
 
 data class LoginRequest(
@@ -116,4 +117,43 @@ data class SendGiftRequest(
 data class SendGiftResponse(
     val coinAmount: Int,
     val gift: GiftResponse
+)
+
+data class TaskResponse(
+    val type: String,
+    val title: String,
+    val description: String,
+    val reward: Int,
+    val repeatable: Boolean,
+    val status: String
+)
+
+data class TaskClaimRequest(
+    val type: String
+)
+
+data class TaskClaimResponse(
+    val type: String,
+    val reward: Int,
+    val balance: Int
+)
+
+data class BlockedUserInfo(
+    val id: String,
+    val username: String,
+    val avatarUrl: String? = null,
+    val country: String? = null,
+    val language: String? = null
+)
+
+data class BlockedUserResponse(
+    val blocked: BlockedUserInfo
+)
+
+data class ReferralInfoResponse(
+    val code: String,
+    val invitedCount: Int,
+    val totalEarned: Int,
+    val referrerBonus: Int,
+    val refereeBonus: Int
 )

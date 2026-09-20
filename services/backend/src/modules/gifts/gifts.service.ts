@@ -2,6 +2,7 @@ import { forwardRef, Inject, Injectable, NotFoundException, BadRequestException 
 import { PrismaService } from "../../database/prisma.service";
 import { WalletService } from "../wallet/wallet.service";
 import { VipService } from "../vip/vip.service";
+import { LevelsService } from "../levels/levels.service";
 import { RealtimeGateway } from "../../realtime/realtime.gateway";
 import { RealtimeEvent } from "@vibely/types";
 import { TransactionType } from "@prisma/client";
@@ -24,6 +25,7 @@ export class GiftsService {
     private readonly prisma: PrismaService,
     private readonly wallet: WalletService,
     private readonly vip: VipService,
+    private readonly levels: LevelsService,
     @Inject(forwardRef(() => RealtimeGateway)) private readonly gateway: RealtimeGateway,
   ) {}
 
@@ -91,6 +93,8 @@ export class GiftsService {
 
     this.gateway.server.to(senderId).emit(RealtimeEvent.GiftSent, payload);
     this.gateway.server.to(receiverId).emit(RealtimeEvent.GiftReceived, payload);
+
+    await Promise.all([this.levels.awardXp(senderId, 5), this.levels.awardXp(receiverId, 5)]);
 
     logger.info("Gift sent", { senderId, receiverId, giftId, coinAmount });
     return giftTransaction;

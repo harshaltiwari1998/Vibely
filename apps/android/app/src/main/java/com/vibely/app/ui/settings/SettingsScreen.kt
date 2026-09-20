@@ -20,8 +20,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import android.widget.Toast
 
+private fun formatBytes(bytes: Long): String {
+    if (bytes < 1024 * 1024) return "${bytes / 1024} KB"
+    return "%.1f MB".format(bytes / (1024.0 * 1024.0))
+}
+
+private fun clearCacheDir(dir: java.io.File): Long {
+    val freed = dir.walkBottomUp().filter { it.isFile }.sumOf { it.length() }
+    dir.listFiles()?.forEach { it.deleteRecursively() }
+    return freed
+}
+
 @Composable
-fun SettingsScreen(onLogout: () -> Unit) {
+fun SettingsScreen(onLogout: () -> Unit, onOpenBlacklist: () -> Unit = {}) {
     val context = LocalContext.current
     Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF8FAFC)).verticalScroll(rememberScrollState())) {
         Text(
@@ -33,7 +44,19 @@ fun SettingsScreen(onLogout: () -> Unit) {
             color = Color(0xFF111827)
         )
         listOf("App Language" to "English", "Account" to "", "Message Notification" to "", "Set password" to "To bind", "Withdrawal password" to "", "Google" to "Connected", "Privacy settings" to "", "Personal blacklist" to "", "Clear cache" to "", "About us" to "V1.1.2.2").forEach { (label, value) ->
-            Row(modifier = Modifier.fillMaxWidth().clickable { Toast.makeText(context, "Opening $label…", Toast.LENGTH_SHORT).show() }.padding(horizontal = 24.dp, vertical = 21.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.fillMaxWidth().clickable {
+                    when (label) {
+                        "Personal blacklist" -> onOpenBlacklist()
+                        "Clear cache" -> {
+                            val freed = clearCacheDir(context.cacheDir)
+                            Toast.makeText(context, "Cleared ${formatBytes(freed)}", Toast.LENGTH_SHORT).show()
+                        }
+                        else -> Toast.makeText(context, "$label is coming soon", Toast.LENGTH_SHORT).show()
+                    }
+                }.padding(horizontal = 24.dp, vertical = 21.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(label, modifier = Modifier.weight(1f), color = Color(0xFF3C3A3C), fontSize = 21.sp)
                 Text(value, color = if (value == "Connected") Color(0xFF14C9A0) else Color(0xFFBDBDBD), fontSize = 15.sp)
                 Text("›", color = Color(0xFFC8C8C8), fontSize = 32.sp, modifier = Modifier.padding(start = 10.dp))
