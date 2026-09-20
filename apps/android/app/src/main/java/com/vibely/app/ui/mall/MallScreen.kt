@@ -82,8 +82,8 @@ fun MallScreen(viewModel: MallViewModel, onWalletChanged: () -> Unit = {}, onBac
                 }
             }
             when (val s = itemsState) {
-                is UiState.Loading -> Text("Loading...", color = Color(0xFF9A9299), modifier = Modifier.padding(24.dp))
-                is UiState.Error -> Text(s.message, color = Color(0xFFE64545), modifier = Modifier.padding(24.dp))
+                is UiState.Loading -> Text("Loading...", color = Color(0xFF6B7280), modifier = Modifier.padding(24.dp))
+                is UiState.Error -> Text(s.message, color = Color(0xFFEF4444), modifier = Modifier.padding(24.dp))
                 is UiState.Success -> {
                     val filtered = s.data.filter { it.category == selectedCategory }
                     LazyVerticalGrid(columns = GridCells.Fixed(2), modifier = Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -94,7 +94,7 @@ fun MallScreen(viewModel: MallViewModel, onWalletChanged: () -> Unit = {}, onBac
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 Text(item.iconUrl, fontSize = 36.sp)
-                                Text(item.name, fontWeight = FontWeight.Bold, color = Color(0xFF19131F), fontSize = 13.sp, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 6.dp))
+                                Text(item.name, fontWeight = FontWeight.Bold, color = Color(0xFF111827), fontSize = 13.sp, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 6.dp))
                                 Text(
                                     if (owned) "Owned" else "💎 ${item.price}",
                                     color = Color.White,
@@ -114,11 +114,11 @@ fun MallScreen(viewModel: MallViewModel, onWalletChanged: () -> Unit = {}, onBac
             }
         } else {
             when (val s = inventoryState) {
-                is UiState.Loading -> Text("Loading...", color = Color(0xFF9A9299), modifier = Modifier.padding(24.dp))
-                is UiState.Error -> Text(s.message, color = Color(0xFFE64545), modifier = Modifier.padding(24.dp))
+                is UiState.Loading -> Text("Loading...", color = Color(0xFF6B7280), modifier = Modifier.padding(24.dp))
+                is UiState.Error -> Text(s.message, color = Color(0xFFEF4444), modifier = Modifier.padding(24.dp))
                 is UiState.Success -> {
                     if (s.data.isEmpty()) {
-                        Text("You don't own any items yet.", color = Color(0xFF9A9299), modifier = Modifier.padding(24.dp))
+                        Text("You don't own any items yet.", color = Color(0xFF6B7280), modifier = Modifier.padding(24.dp))
                     } else {
                         LazyVerticalGrid(columns = GridCells.Fixed(2), modifier = Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             items(s.data) { entry ->
@@ -127,7 +127,7 @@ fun MallScreen(viewModel: MallViewModel, onWalletChanged: () -> Unit = {}, onBac
                                     horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
                                     Text(entry.item.iconUrl, fontSize = 32.sp)
-                                    Text(entry.item.name, fontWeight = FontWeight.Bold, color = Color(0xFF19131F), fontSize = 13.sp, textAlign = TextAlign.Center)
+                                    Text(entry.item.name, fontWeight = FontWeight.Bold, color = Color(0xFF111827), fontSize = 13.sp, textAlign = TextAlign.Center)
                                     Text(
                                         if (entry.equipped) "Equipped" else "Equip",
                                         color = if (entry.equipped) Color(0xFFD97706) else Color.White,

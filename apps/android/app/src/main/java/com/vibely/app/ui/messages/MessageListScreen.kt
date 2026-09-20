@@ -44,7 +44,7 @@ fun MessageListScreen(viewModel: MessagesViewModel, onOpenChat: (String) -> Unit
         when (state) {
             is UiState.Loading -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Loading...", color = Color(0xFF9A9299))
+                    Text("Loading...", color = Color(0xFF6B7280))
                 }
             }
             is UiState.Error -> {
@@ -59,7 +59,7 @@ fun MessageListScreen(viewModel: MessagesViewModel, onOpenChat: (String) -> Unit
                 val chats = (state as UiState.Success).data
                 if (chats.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("No conversations yet", color = Color(0xFF9A9299))
+                        Text("No conversations yet", color = Color(0xFF6B7280))
                     }
                 } else {
                     LazyColumn {
@@ -74,8 +74,8 @@ fun MessageListScreen(viewModel: MessagesViewModel, onOpenChat: (String) -> Unit
                                 }
                                 Spacer(modifier = Modifier.width(14.dp))
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text(chat.peer.username, fontWeight = FontWeight.Bold, color = Color(0xFF1B1720))
-                                    Text(chat.lastMessage?.content ?: "Say hi 👋", color = Color(0xFF9A9299), fontSize = 13.sp, maxLines = 1)
+                                    Text(chat.peer.username, fontWeight = FontWeight.Bold, color = Color(0xFF111827))
+                                    Text(chat.lastMessage?.content ?: "Say hi 👋", color = Color(0xFF6B7280), fontSize = 13.sp, maxLines = 1)
                                 }
                             }
                         }

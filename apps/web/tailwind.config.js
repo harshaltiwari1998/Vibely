@@ -10,22 +10,24 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Matches the purple/pink identity established by the Android app
+        // (VibelyColors.AccentPurple = #7C3AED lands exactly on brand-600).
         brand: {
-          50: "#eef2ff",
-          100: "#e0e7ff",
-          200: "#c7d2fe",
-          300: "#a5b4fc",
-          400: "#818cf8",
-          500: "#6366f1",
-          600: "#4f46e5",
-          700: "#4338ca",
-          800: "#3730a3",
-          900: "#312e81",
+          50: "#f5f3ff",
+          100: "#ede9fe",
+          200: "#ddd6fe",
+          300: "#c4b5fd",
+          400: "#a78bfa",
+          500: "#8b5cf6",
+          600: "#7c3aed",
+          700: "#6d28d9",
+          800: "#5b21b6",
+          900: "#4c1d95",
         },
         accent: {
-          400: "#fb7185",
-          500: "#f43f5e",
-          600: "#e11d48",
+          400: "#fb7fb0",
+          500: "#ff5b82",
+          600: "#ff1470",
         },
       },
       fontFamily: {

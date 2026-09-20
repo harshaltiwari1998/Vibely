@@ -56,8 +56,8 @@ fun FamilyScreen(viewModel: FamilyViewModel, myUserId: String?) {
     }
 
     when (val s = myFamilyState) {
-        is UiState.Loading -> Text("Loading...", color = Color(0xFF9A9299), modifier = Modifier.padding(24.dp))
-        is UiState.Error -> Text(s.message, color = Color(0xFFE64545), modifier = Modifier.padding(24.dp))
+        is UiState.Loading -> Text("Loading...", color = Color(0xFF6B7280), modifier = Modifier.padding(24.dp))
+        is UiState.Error -> Text(s.message, color = Color(0xFFEF4444), modifier = Modifier.padding(24.dp))
         is UiState.Success -> {
             val family = s.data
             if (family == null) {
@@ -77,23 +77,23 @@ private fun NoFamilyView(viewModel: FamilyViewModel) {
     val browseState by viewModel.browseList.collectAsState()
     val isBusy by viewModel.isBusy.collectAsState()
 
-    Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF7F5FA))) {
-        Column(modifier = Modifier.fillMaxWidth().background(Brush.horizontalGradient(listOf(Color(0xFFFF9A3C), Color(0xFFFF5C7C)))).padding(24.dp)) {
+    Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF8FAFC))) {
+        Column(modifier = Modifier.fillMaxWidth().background(Brush.horizontalGradient(listOf(Color(0xFFFF9A3C), Color(0xFFFF5B82)))).padding(24.dp)) {
             Text("Family", color = Color.White, fontWeight = FontWeight.Black, fontSize = 28.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
             Text("You're not in a family yet.", color = Color.White.copy(alpha = 0.9f), fontSize = 13.sp, modifier = Modifier.fillMaxWidth().padding(top = 6.dp), textAlign = TextAlign.Center)
         }
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("Create a family", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFF19131F))
+            Text("Create a family", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFF111827))
             OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Family name") }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp), singleLine = true)
             OutlinedTextField(value = bio, onValueChange = { bio = it }, label = { Text("Bio (optional)") }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp), singleLine = true)
             Button(
                 onClick = { viewModel.create(name, bio.takeIf { it.isNotBlank() }) },
                 enabled = !isBusy && name.trim().length >= 2,
                 modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF5C7C))
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF5B82))
             ) { Text("Create") }
 
-            Text("Or join one", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFF19131F), modifier = Modifier.padding(top = 24.dp))
+            Text("Or join one", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFF111827), modifier = Modifier.padding(top = 24.dp))
             OutlinedTextField(
                 value = search,
                 onValueChange = { search = it; viewModel.browse(it.takeIf { q -> q.isNotBlank() }) },
@@ -103,8 +103,8 @@ private fun NoFamilyView(viewModel: FamilyViewModel) {
             )
         }
         when (val s = browseState) {
-            is UiState.Loading -> Text("Loading...", color = Color(0xFF9A9299), modifier = Modifier.padding(horizontal = 16.dp))
-            is UiState.Error -> Text(s.message, color = Color(0xFFE64545), modifier = Modifier.padding(horizontal = 16.dp))
+            is UiState.Loading -> Text("Loading...", color = Color(0xFF6B7280), modifier = Modifier.padding(horizontal = 16.dp))
+            is UiState.Error -> Text(s.message, color = Color(0xFFEF4444), modifier = Modifier.padding(horizontal = 16.dp))
             is UiState.Success -> {
                 LazyColumn(modifier = Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(s.data) { fam ->
@@ -113,8 +113,8 @@ private fun NoFamilyView(viewModel: FamilyViewModel) {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(fam.name, fontWeight = FontWeight.Bold, color = Color(0xFF19131F))
-                                Text("${fam.memberCount} members · owned by ${fam.ownerUsername}", fontSize = 12.sp, color = Color(0xFF9A9299))
+                                Text(fam.name, fontWeight = FontWeight.Bold, color = Color(0xFF111827))
+                                Text("${fam.memberCount} members · owned by ${fam.ownerUsername}", fontSize = 12.sp, color = Color(0xFF6B7280))
                             }
                             Text(
                                 "Join",
@@ -123,7 +123,7 @@ private fun NoFamilyView(viewModel: FamilyViewModel) {
                                 fontSize = 12.sp,
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(20.dp))
-                                    .background(Color(0xFFFF5C7C))
+                                    .background(Color(0xFFFF5B82))
                                     .clickable(enabled = !isBusy) { viewModel.join(fam.id) }
                                     .padding(horizontal = 16.dp, vertical = 8.dp)
                             )
@@ -140,8 +140,8 @@ private fun FamilyDetailView(viewModel: FamilyViewModel, family: com.vibely.app.
     val leaderboardState by viewModel.leaderboard.collectAsState()
     val isBusy by viewModel.isBusy.collectAsState()
 
-    Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF7F5FA))) {
-        Column(modifier = Modifier.fillMaxWidth().background(Brush.horizontalGradient(listOf(Color(0xFFFF9A3C), Color(0xFFFF5C7C)))).padding(24.dp)) {
+    Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF8FAFC))) {
+        Column(modifier = Modifier.fillMaxWidth().background(Brush.horizontalGradient(listOf(Color(0xFFFF9A3C), Color(0xFFFF5B82)))).padding(24.dp)) {
             Text(family.name, color = Color.White, fontWeight = FontWeight.Black, fontSize = 28.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
             family.bio?.let { Text(it, color = Color.White.copy(alpha = 0.9f), fontSize = 13.sp, modifier = Modifier.fillMaxWidth().padding(top = 6.dp), textAlign = TextAlign.Center) }
             Text("${family.members.size} members · owner ${family.owner.username}", color = Color.White.copy(alpha = 0.85f), fontSize = 12.sp, modifier = Modifier.fillMaxWidth().padding(top = 8.dp), textAlign = TextAlign.Center)
@@ -150,13 +150,13 @@ private fun FamilyDetailView(viewModel: FamilyViewModel, family: com.vibely.app.
             onClick = { if (isOwner) viewModel.disband() else viewModel.leave() },
             enabled = !isBusy,
             modifier = Modifier.fillMaxWidth().padding(16.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE64545))
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))
         ) { Text(if (isOwner) "Disband family" else "Leave family") }
 
-        Text("Gift leaderboard", fontWeight = FontWeight.Black, fontSize = 16.sp, color = Color(0xFF19131F), modifier = Modifier.padding(horizontal = 16.dp))
+        Text("Gift leaderboard", fontWeight = FontWeight.Black, fontSize = 16.sp, color = Color(0xFF111827), modifier = Modifier.padding(horizontal = 16.dp))
         when (val s = leaderboardState) {
-            is UiState.Loading -> Text("Loading...", color = Color(0xFF9A9299), modifier = Modifier.padding(16.dp))
-            is UiState.Error -> Text(s.message, color = Color(0xFFE64545), modifier = Modifier.padding(16.dp))
+            is UiState.Loading -> Text("Loading...", color = Color(0xFF6B7280), modifier = Modifier.padding(16.dp))
+            is UiState.Error -> Text(s.message, color = Color(0xFFEF4444), modifier = Modifier.padding(16.dp))
             is UiState.Success -> {
                 LazyColumn(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(s.data) { entry ->
@@ -165,10 +165,10 @@ private fun FamilyDetailView(viewModel: FamilyViewModel, family: com.vibely.app.
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Box(modifier = Modifier.size(32.dp).clip(CircleShape).background(Color(0xFFFFE3E9)), contentAlignment = Alignment.Center) {
-                                Text(entry.username.take(1).uppercase(), fontWeight = FontWeight.Bold, color = Color(0xFFE64545), fontSize = 12.sp)
+                                Text(entry.username.take(1).uppercase(), fontWeight = FontWeight.Bold, color = Color(0xFFEF4444), fontSize = 12.sp)
                             }
                             Spacer(modifier = Modifier.width(10.dp))
-                            Text(entry.username, fontWeight = FontWeight.Bold, color = Color(0xFF19131F), modifier = Modifier.weight(1f))
+                            Text(entry.username, fontWeight = FontWeight.Bold, color = Color(0xFF111827), modifier = Modifier.weight(1f))
                             Text("💎 ${entry.totalGiftsSent}", color = Color(0xFFD31CE5), fontWeight = FontWeight.Bold, fontSize = 13.sp)
                         }
                     }

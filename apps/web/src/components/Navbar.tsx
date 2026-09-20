@@ -45,7 +45,7 @@ export function Navbar() {
         </nav>
         <div className="ml-auto flex items-center gap-3">
           {isAdmin && (
-            <NavLink to="/admin" className="hidden rounded-lg bg-gray-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-gray-700 sm:inline-flex">
+            <NavLink to="/admin" className="hidden rounded-lg bg-brand-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-800 sm:inline-flex">
               Admin
             </NavLink>
           )}
@@ -56,12 +56,12 @@ export function Navbar() {
         </div>
       </div>
       </header>
-      <nav className="fixed inset-x-0 bottom-0 z-20 flex h-[72px] items-center justify-around border-t border-[#eadbf2] bg-white/95 px-2 pb-1 shadow-[0_-8px_24px_rgba(94,25,119,0.08)] backdrop-blur md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-20 flex h-[72px] items-center justify-around border-t border-brand-100 bg-white/95 px-2 pb-1 shadow-[0_-8px_24px_rgba(124,58,237,0.08)] backdrop-blur md:hidden">
         {links.map((link) => (
           <NavLink
             key={link.to}
             to={link.to}
-            className={({ isActive }) => `flex min-w-12 flex-col items-center gap-1 text-[10px] font-semibold ${isActive ? "text-[#ad2bd9]" : "text-gray-400"}`}
+            className={({ isActive }) => `flex min-w-12 flex-col items-center gap-1 text-[10px] font-semibold ${isActive ? "text-brand-600" : "text-gray-400"}`}
           >
             <span className="flex h-7 w-7 items-center justify-center text-xl leading-none">{link.icon}</span>
             {link.label}

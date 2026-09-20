@@ -68,8 +68,8 @@ fun ProfileScreen(
     Column(modifier = Modifier.fillMaxSize().background(Color.White).padding(20.dp)) {
         Row(verticalAlignment = Alignment.Top, modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.weight(1f)) {
-                Text("Harshal", fontWeight = FontWeight.Black, fontSize = 26.sp, color = Color(0xFF1B1720))
-                Text("64475853", color = Color(0xFF9A9299), fontSize = 13.sp)
+                Text("Harshal", fontWeight = FontWeight.Black, fontSize = 26.sp, color = Color(0xFF111827))
+                Text("64475853", color = Color(0xFF6B7280), fontSize = 13.sp)
                 Row(modifier = Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("♂ 28", color = Color.White, fontSize = 12.sp, modifier = Modifier.clip(RoundedCornerShape(24.dp)).background(Color(0xFF3FB6E8)).padding(horizontal = 12.dp, vertical = 6.dp))
                     Text("English", color = Color.White, fontSize = 12.sp, modifier = Modifier.clip(RoundedCornerShape(24.dp)).background(Color(0xFFF29B3C)).padding(horizontal = 12.dp, vertical = 6.dp))
@@ -120,8 +120,8 @@ fun ProfileScreen(
 @Composable
 private fun ProfileStat(value: String, label: String, modifier: Modifier) {
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(value, fontWeight = FontWeight.Black, fontSize = 24.sp, color = Color(0xFF1B1720))
-        Text(label, color = Color(0xFF9A9299), fontSize = 13.sp)
+        Text(value, fontWeight = FontWeight.Black, fontSize = 24.sp, color = Color(0xFF111827))
+        Text(label, color = Color(0xFF6B7280), fontSize = 13.sp)
     }
 }
 

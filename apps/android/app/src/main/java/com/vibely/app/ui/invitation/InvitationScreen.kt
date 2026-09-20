@@ -51,8 +51,8 @@ fun InvitationScreen(viewModel: ReferralViewModel, onBack: () -> Unit = {}) {
             Text("Invite Rewards", color = Color.White, fontWeight = FontWeight.Black, fontSize = 32.sp)
         }
         when (val s = state) {
-            is UiState.Loading -> Text("Loading...", color = Color(0xFF9A9299), modifier = Modifier.padding(24.dp))
-            is UiState.Error -> Text(s.message, color = Color(0xFFE64545), modifier = Modifier.padding(24.dp))
+            is UiState.Loading -> Text("Loading...", color = Color(0xFF6B7280), modifier = Modifier.padding(24.dp))
+            is UiState.Error -> Text(s.message, color = Color(0xFFEF4444), modifier = Modifier.padding(24.dp))
             is UiState.Success -> {
                 val info = s.data
                 Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {

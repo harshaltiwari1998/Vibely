@@ -27,8 +27,8 @@ export function AdminLayout({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#f5f6f8] text-gray-900">
-      <aside className="flex w-56 flex-shrink-0 flex-col bg-gray-900 text-gray-200">
+    <div className="flex min-h-screen bg-[#f7f7f8] text-gray-900">
+      <aside className="flex w-56 flex-shrink-0 flex-col bg-brand-900 text-brand-200">
         <div className="px-5 py-5 text-lg font-bold text-white">Vibely Admin</div>
         <nav className="flex-1 space-y-1 px-3">
           {links.map((l) => (
@@ -38,7 +38,7 @@ export function AdminLayout({ children }: { children: ReactNode }) {
               end={l.end}
               className={({ isActive }) =>
                 `flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${
-                  isActive ? "bg-gray-700 text-white" : "text-gray-400 hover:bg-gray-800 hover:text-white"
+                  isActive ? "bg-brand-700 text-white" : "text-brand-300 hover:bg-brand-800 hover:text-white"
                 }`
               }
             >
@@ -47,13 +47,13 @@ export function AdminLayout({ children }: { children: ReactNode }) {
             </NavLink>
           ))}
         </nav>
-        <div className="border-t border-gray-800 px-4 py-4">
-          <div className="text-xs text-gray-400">@{username}</div>
-          <div className="text-xs text-gray-500">{role}</div>
-          <button className="mt-2 w-full rounded-lg border border-gray-700 py-1.5 text-xs font-medium text-gray-300 hover:bg-gray-800" onClick={onLogout}>
+        <div className="border-t border-brand-800 px-4 py-4">
+          <div className="text-xs text-brand-300">@{username}</div>
+          <div className="text-xs text-brand-400">{role}</div>
+          <button className="mt-2 w-full rounded-lg border border-brand-700 py-1.5 text-xs font-medium text-brand-200 hover:bg-brand-800" onClick={onLogout}>
             Logout
           </button>
-          <NavLink to="/home" className="mt-2 block text-center text-xs text-gray-500 hover:text-gray-300">
+          <NavLink to="/home" className="mt-2 block text-center text-xs text-brand-400 hover:text-brand-200">
             ← Back to app
           </NavLink>
         </div>

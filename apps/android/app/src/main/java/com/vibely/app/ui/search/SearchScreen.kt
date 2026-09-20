@@ -95,7 +95,7 @@ private fun SearchResultRow(user: SearchUserResponse) {
         }
         Spacer(modifier = Modifier.width(14.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(user.username, fontWeight = FontWeight.Bold, color = Color(0xFF1B1720))
+            Text(user.username, fontWeight = FontWeight.Bold, color = Color(0xFF111827))
             Text(user.country ?: "", fontSize = 12.sp, color = Color(0xFF9CA3AF))
         }
         if (user.profile?.onlineStatus == "ONLINE") {

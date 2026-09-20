@@ -91,8 +91,8 @@ fun TaskCenterScreen(viewModel: TaskViewModel, onWalletChanged: () -> Unit = {},
                             }
                             Spacer(modifier = Modifier.width(13.dp))
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(task.title, color = Color(0xFF19131F), fontWeight = FontWeight.Bold)
-                                Text(task.description, color = Color(0xFF9A9299), fontSize = 12.sp)
+                                Text(task.title, color = Color(0xFF111827), fontWeight = FontWeight.Bold)
+                                Text(task.description, color = Color(0xFF6B7280), fontSize = 12.sp)
                                 Text("💎 ${task.reward}", color = Color(0xFFD31CE5), fontWeight = FontWeight.Bold, fontSize = 13.sp)
                             }
                             Text(

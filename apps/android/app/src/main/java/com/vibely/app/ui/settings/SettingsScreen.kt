@@ -66,7 +66,7 @@ fun SettingsScreen(onLogout: () -> Unit, onOpenBlacklist: () -> Unit = {}) {
             modifier = Modifier.fillMaxWidth().clickable { onLogout() }.padding(horizontal = 24.dp, vertical = 21.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Log out", modifier = Modifier.weight(1f), color = Color(0xFFE64545), fontSize = 21.sp, fontWeight = FontWeight.Bold)
+            Text("Log out", modifier = Modifier.weight(1f), color = Color(0xFFEF4444), fontSize = 21.sp, fontWeight = FontWeight.Bold)
         }
     }
 }

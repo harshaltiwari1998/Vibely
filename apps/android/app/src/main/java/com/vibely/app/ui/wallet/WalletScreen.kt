@@ -101,7 +101,7 @@ fun WalletScreen(viewModel: WalletViewModel) {
         DiamondPack("616000", "560000", "INR 9000.00")
     )
 
-    Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF7F5FA))) {
+    Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF8FAFC))) {
         Column(modifier = Modifier.fillMaxWidth().background(Brush.horizontalGradient(listOf(Color(0xFFB13BF0), Color(0xFF9350F5)))).padding(20.dp)) {
             Text("My Wallet", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 22.sp, modifier = Modifier.fillMaxWidth(), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
             Row(modifier = Modifier.padding(top = 24.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -128,9 +128,9 @@ fun WalletScreen(viewModel: WalletViewModel) {
             }
             Row(modifier = Modifier.padding(top = 16.dp).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text("India ▾", color = Color(0xFF3C3A3C), modifier = Modifier.weight(1f).clip(RoundedCornerShape(24.dp)).background(Color.White).clickable { Toast.makeText(context, "Select country/region…", Toast.LENGTH_SHORT).show() }.padding(horizontal = 16.dp, vertical = 12.dp))
-                Text("💳 all wallet", color = Color(0xFFE64545), fontWeight = FontWeight.Bold, modifier = Modifier.clip(RoundedCornerShape(24.dp)).background(Color(0xFFFFE7E7)).clickable { Toast.makeText(context, "Opening payment methods…", Toast.LENGTH_SHORT).show() }.padding(horizontal = 16.dp, vertical = 12.dp))
+                Text("💳 all wallet", color = Color(0xFFEF4444), fontWeight = FontWeight.Bold, modifier = Modifier.clip(RoundedCornerShape(24.dp)).background(Color(0xFFFFE7E7)).clickable { Toast.makeText(context, "Opening payment methods…", Toast.LENGTH_SHORT).show() }.padding(horizontal = 16.dp, vertical = 12.dp))
             }
-            Text("Weekly Special Offers", color = Color(0xFF19131F), fontWeight = FontWeight.Black, fontSize = 20.sp, modifier = Modifier.padding(top = 22.dp))
+            Text("Weekly Special Offers", color = Color(0xFF111827), fontWeight = FontWeight.Black, fontSize = 20.sp, modifier = Modifier.padding(top = 22.dp))
             LazyVerticalGrid(columns = GridCells.Fixed(3), modifier = Modifier.padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 items(singlePacks + bundlePacks) { pack ->
                     Column(
@@ -144,7 +144,7 @@ fun WalletScreen(viewModel: WalletViewModel) {
                             .padding(12.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text("💎 ${pack.diamonds}", fontWeight = FontWeight.Black, fontSize = 15.sp, color = Color(0xFF19131F))
+                        Text("💎 ${pack.diamonds}", fontWeight = FontWeight.Black, fontSize = 15.sp, color = Color(0xFF111827))
                         Text(pack.strike, fontSize = 11.sp, color = Color(0xFFB9AFC2), textDecoration = TextDecoration.LineThrough)
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(pack.price, color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Color(0xFFE64AA0)).padding(horizontal = 8.dp, vertical = 6.dp))

@@ -57,7 +57,7 @@ fun VipScreen(viewModel: VipViewModel, onWalletChanged: () -> Unit = {}) {
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF7F5FA)).verticalScroll(rememberScrollState())) {
+    Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF8FAFC)).verticalScroll(rememberScrollState())) {
         Column(
             modifier = Modifier.fillMaxWidth()
                 .background(Brush.horizontalGradient(listOf(Color(0xFF141215), Color(0xFF3C3345))))
@@ -78,8 +78,8 @@ fun VipScreen(viewModel: VipViewModel, onWalletChanged: () -> Unit = {}) {
 
         Column(modifier = Modifier.padding(16.dp)) {
             when (val state = tiersState) {
-                is UiState.Loading -> Text("Loading VIP tiers…", color = Color(0xFF9A9299), modifier = Modifier.padding(24.dp))
-                is UiState.Error -> Text(state.message, color = Color(0xFFE64545), modifier = Modifier.padding(24.dp))
+                is UiState.Loading -> Text("Loading VIP tiers…", color = Color(0xFF6B7280), modifier = Modifier.padding(24.dp))
+                is UiState.Error -> Text(state.message, color = Color(0xFFEF4444), modifier = Modifier.padding(24.dp))
                 is UiState.Success -> {
                     val currentLevel = (statusState as? UiState.Success)?.data?.takeIf { it.isActive }?.level
                     state.data.forEach { tier ->

@@ -143,10 +143,10 @@ fun ChatPriceScreen(viewModel: ChatPriceViewModel, onBack: () -> Unit = {}, onOp
 @Composable
 private fun StatCard(label: String, value: String, modifier: Modifier) {
     Column(
-        modifier = modifier.clip(RoundedCornerShape(14.dp)).background(Color(0xFFF7F5FA)).padding(14.dp),
+        modifier = modifier.clip(RoundedCornerShape(14.dp)).background(Color(0xFFF8FAFC)).padding(14.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(label, color = Color(0xFF9A9299), fontSize = 12.sp)
-        Text(value, color = Color(0xFF19131F), fontWeight = FontWeight.Black, fontSize = 18.sp, modifier = Modifier.padding(top = 4.dp))
+        Text(label, color = Color(0xFF6B7280), fontSize = 12.sp)
+        Text(value, color = Color(0xFF111827), fontWeight = FontWeight.Black, fontSize = 18.sp, modifier = Modifier.padding(top = 4.dp))
     }
 }

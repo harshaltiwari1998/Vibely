@@ -110,8 +110,8 @@ fun LevelScreen(viewModel: LevelViewModel, onBack: () -> Unit = {}) {
             }
         } else {
             when (val s = leaderboardState) {
-                is UiState.Loading -> Text("Loading...", color = Color(0xFF9A9299), modifier = Modifier.padding(20.dp))
-                is UiState.Error -> Text(s.message, color = Color(0xFFE64545), modifier = Modifier.padding(20.dp))
+                is UiState.Loading -> Text("Loading...", color = Color(0xFF6B7280), modifier = Modifier.padding(20.dp))
+                is UiState.Error -> Text(s.message, color = Color(0xFFEF4444), modifier = Modifier.padding(20.dp))
                 is UiState.Success -> {
                     LazyColumn(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         itemsIndexed(s.data) { index, entry ->
@@ -138,16 +138,16 @@ private fun LevelPrivilege(icon: String, label: String, requirement: String) {
 @Composable
 private fun LeaderboardRow(rank: Int, username: String, level: Int, xp: Int) {
     Row(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Color(0xFFF7F5FA)).padding(14.dp),
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Color(0xFFF8FAFC)).padding(14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text("#$rank", color = Color(0xFF9A9299), fontWeight = FontWeight.Bold, modifier = Modifier.padding(end = 12.dp))
+        Text("#$rank", color = Color(0xFF6B7280), fontWeight = FontWeight.Bold, modifier = Modifier.padding(end = 12.dp))
         Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(Color(0xFFE0E7FF)), contentAlignment = Alignment.Center) {
             Text(username.take(1).uppercase(), fontWeight = FontWeight.Bold, color = Color(0xFF3E6BF2))
         }
         Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
-            Text(username, fontWeight = FontWeight.Bold, color = Color(0xFF19131F))
-            Text("$xp XP", color = Color(0xFF9A9299), fontSize = 12.sp)
+            Text(username, fontWeight = FontWeight.Bold, color = Color(0xFF111827))
+            Text("$xp XP", color = Color(0xFF6B7280), fontSize = 12.sp)
         }
         Text("Lv $level", color = Color(0xFF7C3AED), fontWeight = FontWeight.Bold, modifier = Modifier.clip(RoundedCornerShape(20.dp)).background(Color(0xFFF3EBFF)).padding(horizontal = 12.dp, vertical = 6.dp))
     }
