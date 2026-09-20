@@ -64,4 +64,11 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    implementation("io.livekit:livekit-android:2.14.2")
+    implementation("io.socket:socket.io-client:2.1.1") {
+        exclude(group = "org.json", module = "json")
+    }
+    // 1-to-1 P2P calls use raw WebRTC directly (separate from LiveKit's SFU,
+    // which is only for the many-viewer Live Streaming rooms).
+    implementation("io.getstream:stream-webrtc-android:1.1.1")
 }

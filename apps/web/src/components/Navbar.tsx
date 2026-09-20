@@ -3,9 +3,10 @@ import { Logo } from "./Logo";
 import { useAuthStore, logout } from "../store/auth";
 
 const links = [
+  { to: "/home", label: "Home", icon: "⌂" },
   { to: "/match", label: "Match", icon: "♥" },
-  { to: "/discover", label: "Live", icon: "◉" },
-  { to: "/search", label: "Search", icon: "⌕" },
+  { to: "/live", label: "Live", icon: "▶" },
+  { to: "/discover", label: "Discover", icon: "◉" },
   { to: "/chat", label: "Chats", icon: "▰" },
   { to: "/profile", label: "Profile", icon: "●" },
 ];
@@ -49,12 +50,12 @@ export function Navbar() {
         </div>
       </div>
       </header>
-      <nav className="fixed inset-x-0 bottom-0 z-20 flex h-[68px] items-center justify-around border-t border-black/5 bg-white px-2 pb-1 md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-20 flex h-[72px] items-center justify-around border-t border-[#eadbf2] bg-white/95 px-2 pb-1 shadow-[0_-8px_24px_rgba(94,25,119,0.08)] backdrop-blur md:hidden">
         {links.map((link) => (
           <NavLink
             key={link.to}
             to={link.to}
-            className={({ isActive }) => `flex min-w-12 flex-col items-center gap-1 text-[10px] font-semibold ${isActive ? "text-[#f42b83]" : "text-gray-400"}`}
+            className={({ isActive }) => `flex min-w-12 flex-col items-center gap-1 text-[10px] font-semibold ${isActive ? "text-[#ad2bd9]" : "text-gray-400"}`}
           >
             <span className="flex h-7 w-7 items-center justify-center text-xl leading-none">{link.icon}</span>
             {link.label}

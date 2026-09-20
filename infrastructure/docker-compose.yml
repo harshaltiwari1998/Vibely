@@ -1,0 +1,49 @@
+# Local infrastructure for Vibely: Postgres + Redis + LiveKit (SFU for live streaming).
+# The backend/web/admin apps run natively on the host (see README "Quick Start"),
+# only their dependencies run here.
+#
+# All persistent data is bind-mounted under ./data so it lives inside this
+# project folder instead of Docker's internal volume storage.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: vibely
+      POSTGRES_PASSWORD: vibely
+      POSTGRES_DB: vibely
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vibely"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./data/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  livekit:
+    image: livekit/livekit-server:latest
+    restart: unless-stopped
+    command: --config /etc/livekit.yaml
+    volumes:
+      - ./livekit.yaml:/etc/livekit.yaml:ro
+      - ./data/livekit:/data
+    ports:
+      - "7880:7880"
+      - "7881:7881"
+      - "50000-50100:50000-50100/udp"

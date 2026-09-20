@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
+import { forwardRef, Inject, Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../../database/prisma.service";
 import { RedisService } from "../../cache/redis.service";
 import { RealtimeGateway } from "../../realtime/realtime.gateway";
@@ -12,7 +12,7 @@ export class CallsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly redis: RedisService,
-    private readonly gateway: RealtimeGateway,
+    @Inject(forwardRef(() => RealtimeGateway)) private readonly gateway: RealtimeGateway,
   ) {}
 
   async initiate(initiatorId: string, receiverId: string) {

@@ -1,9 +1,16 @@
-import { Module } from "@nestjs/common";
+import { forwardRef, Module } from "@nestjs/common";
 import { JwtModule } from "@nestjs/jwt";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { PresenceService } from "./presence.service";
 import { RealtimeGateway } from "./realtime.gateway";
 import { SignalingGateway } from "./signaling.gateway";
+import { LiveGateway } from "./live.gateway";
+import { MatchingModule } from "../modules/matching/matching.module";
+import { CallsModule } from "../modules/calls/calls.module";
+import { ChatModule } from "../modules/chat/chat.module";
+import { GiftsModule } from "../modules/gifts/gifts.module";
+import { NotificationsModule } from "../modules/notifications/notifications.module";
+import { LiveModule } from "../modules/live/live.module";
 
 @Module({
   imports: [
@@ -14,8 +21,14 @@ import { SignalingGateway } from "./signaling.gateway";
         secret: config.get<string>("app.jwtSecret"),
       }),
     }),
+    forwardRef(() => MatchingModule),
+    forwardRef(() => CallsModule),
+    forwardRef(() => ChatModule),
+    forwardRef(() => GiftsModule),
+    forwardRef(() => NotificationsModule),
+    LiveModule,
   ],
-  providers: [PresenceService, RealtimeGateway, SignalingGateway],
-  exports: [PresenceService],
+  providers: [PresenceService, RealtimeGateway, SignalingGateway, LiveGateway],
+  exports: [PresenceService, RealtimeGateway],
 })
 export class RealtimeModule {}

@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { Page } from "../components/Page";
 import { VideoCallService, CALL_SIGNALING_EVENTS } from "../services/videoCall";
-import { io, Socket } from "socket.io-client";
+import { Socket } from "socket.io-client";
+import { getSocket, getSignalSocket } from "../lib/socket";
 import { useAuthStore } from "../store/auth";
 import { RealtimeEvent } from "@vibely/types";
 import { useLocalization } from "../locales";
@@ -13,89 +15,117 @@ type NetworkQuality = "excellent" | "good" | "poor" | "offline";
 export function CallPage() {
   const localVideo = useRef<HTMLVideoElement>(null);
   const remoteVideo = useRef<HTMLVideoElement>(null);
+  // Refs (not state) because socket event handlers are registered once inside
+  // the effect below and would otherwise close over stale state values.
+  const callRef = useRef<VideoCallService | null>(null);
+  const peerIdRef = useRef<string | null>(null);
   const [call, setCall] = useState<VideoCallService | null>(null);
-  const [socket, setSocket] = useState<Socket | null>(null);
+  const signalSocketRef = useRef<Socket | null>(null);
   const [muted, setMuted] = useState(false);
   const [camOff, setCamOff] = useState(false);
   const [callState, setCallState] = useState<CallState>("idle");
   const [elapsed, setElapsed] = useState(0);
   const [callId, setCallId] = useState<string | null>(null);
-  const [peerId, setPeerId] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [networkQuality, _setNetworkQuality] = useState<NetworkQuality>("good");
   const [remoteStatus, setRemoteStatus] = useState<string>("connecting");
   const containerRef = useRef<HTMLDivElement>(null);
   const accessToken = useAuthStore((s) => s.accessToken);
-  const wsUrl = (import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:4000";
   const { t } = useLocalization();
+  const location = useLocation();
+  const navState = location.state as { callId?: string; peerId?: string; isInitiator?: boolean } | null;
 
   useEffect(() => {
     if (!accessToken) return;
-    const sock = io(wsUrl, {
-      auth: { token: `Bearer ${accessToken}` },
-      transports: ["websocket"],
-    });
-    setSocket(sock);
+    const sock = getSocket(accessToken);
+    // WebRTC signaling (offer/answer/ICE/ready/end/failed) is handled by a
+    // separate gateway on the `/signal` namespace, not the default one.
+    const signalSock = getSignalSocket(accessToken);
+    signalSocketRef.current = signalSock;
 
-    sock.on("connect", () => {
-      console.log("Socket connected");
-    });
-
-    sock.on(RealtimeEvent.CallStarted, (payload: { callId: string; initiatorId: string; receiverId: string }) => {
-      setCallId(payload.callId);
+    const onCallStarted = (payload: { callId: string; initiatorId: string; receiverId: string }) => {
       const myId = useAuthStore.getState().userId;
       const isInitiator = myId === payload.initiatorId;
-      setPeerId(isInitiator ? payload.receiverId : payload.initiatorId);
-      startCall(sock, payload.callId, isInitiator);
-    });
+      const resolvedPeerId = isInitiator ? payload.receiverId : payload.initiatorId;
+      setCallId(payload.callId);
+      peerIdRef.current = resolvedPeerId;
+      startCall(signalSock, payload.callId, isInitiator);
+    };
 
-    sock.on(RealtimeEvent.CallOffer, async (payload: { callId: string; fromUserId: string; sdp: unknown }) => {
-      if (!call) return;
-      const answer = await call.createAnswer(payload.sdp as never);
-      sock.emit(CALL_SIGNALING_EVENTS.answer, {
+    const onCallOffer = async (payload: { callId: string; fromUserId: string; sdp: unknown }) => {
+      if (!callRef.current) return;
+      const answer = await callRef.current.createAnswer(payload.sdp as never);
+      signalSock.emit(CALL_SIGNALING_EVENTS.answer, {
         callId: payload.callId,
         toUserId: payload.fromUserId,
         sdp: answer,
       });
-    });
+    };
 
-    sock.on(RealtimeEvent.CallAnswer, async (payload: { callId: string; fromUserId: string; sdp: unknown }) => {
-      if (!call) return;
-      await call.setRemoteDescription(payload.sdp as never);
+    const onCallAnswer = async (payload: { callId: string; fromUserId: string; sdp: unknown }) => {
+      if (!callRef.current) return;
+      await callRef.current.setRemoteDescription(payload.sdp as never);
       setCallState("connecting");
-    });
+    };
 
-    sock.on(RealtimeEvent.IceCandidate, async (payload: { callId: string; fromUserId: string; candidate: unknown }) => {
-      if (!call) return;
-      await call.addIceCandidate(payload.candidate as never);
-    });
+    const onIceCandidate = async (payload: { callId: string; fromUserId: string; candidate: unknown }) => {
+      if (!callRef.current) return;
+      await callRef.current.addIceCandidate(payload.candidate as never);
+    };
 
-    sock.on(RealtimeEvent.CallReady, () => {
+    const onCallReady = () => {
       setCallState("connecting");
       setRemoteStatus("connected");
-    });
+    };
 
-    sock.on(RealtimeEvent.CallEnded, () => {
-      endCall();
+    const onCallEnded = () => {
+      endCall(false);
       setRemoteStatus("ended");
-    });
+    };
 
-    sock.on(RealtimeEvent.CallFailed, () => {
+    const onCallFailed = () => {
       setCallState("failed");
       setRemoteStatus("failed");
-      endCall();
-    });
+      endCall(false);
+    };
 
-    sock.on(RealtimeEvent.CallReconnect, () => {
+    const onCallReconnect = () => {
       setCallState("reconnecting");
       setRemoteStatus("reconnecting");
-    });
+    };
+
+    sock.on(RealtimeEvent.CallStarted, onCallStarted);
+    sock.on(RealtimeEvent.CallEnded, onCallEnded);
+    sock.on(RealtimeEvent.CallFailed, onCallFailed);
+    sock.on(RealtimeEvent.CallReconnect, onCallReconnect);
+    signalSock.on(RealtimeEvent.CallOffer, onCallOffer);
+    signalSock.on(RealtimeEvent.CallAnswer, onCallAnswer);
+    signalSock.on(RealtimeEvent.IceCandidate, onIceCandidate);
+    signalSock.on(RealtimeEvent.CallReady, onCallReady);
+
+    // A call may already have been arranged (e.g. from the match-accept
+    // flow) before this effect ran, so a CallStarted broadcast for it could
+    // already have fired. Start directly from the navigation state instead
+    // of waiting for another one.
+    if (navState?.callId && navState.peerId) {
+      setCallId(navState.callId);
+      peerIdRef.current = navState.peerId;
+      startCall(signalSock, navState.callId, Boolean(navState.isInitiator));
+    }
 
     return () => {
-      sock.disconnect();
-      endCall();
+      sock.off(RealtimeEvent.CallStarted, onCallStarted);
+      sock.off(RealtimeEvent.CallEnded, onCallEnded);
+      sock.off(RealtimeEvent.CallFailed, onCallFailed);
+      sock.off(RealtimeEvent.CallReconnect, onCallReconnect);
+      signalSock.off(RealtimeEvent.CallOffer, onCallOffer);
+      signalSock.off(RealtimeEvent.CallAnswer, onCallAnswer);
+      signalSock.off(RealtimeEvent.IceCandidate, onIceCandidate);
+      signalSock.off(RealtimeEvent.CallReady, onCallReady);
+      endCall(false);
     };
-  }, [accessToken, wsUrl]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accessToken]);
 
   const startCall = async (sock: Socket, cid: string, isInitiator: boolean) => {
     const service = new VideoCallService({
@@ -105,7 +135,12 @@ export function CallPage() {
       ],
     });
     service.onRemoteStream = (remoteStream) => {
-      if (remoteVideo.current) remoteVideo.current.srcObject = remoteStream;
+      if (remoteVideo.current) {
+        remoteVideo.current.srcObject = remoteStream;
+        // Assigning srcObject imperatively doesn't reliably trigger the
+        // `autoplay` attribute in every browser; play() explicitly.
+        remoteVideo.current.play().catch(() => {});
+      }
       setCallState("connected");
     };
     service.onConnectionStateChange = (state) => {
@@ -119,17 +154,25 @@ export function CallPage() {
         setCallState("reconnecting");
       }
     };
+    service.onIceCandidate = (candidate) => {
+      sock.emit(CALL_SIGNALING_EVENTS.ice, {
+        callId: cid,
+        toUserId: peerIdRef.current,
+        candidate,
+      });
+    };
 
     try {
       const stream = await service.initialize();
       if (localVideo.current) localVideo.current.srcObject = stream;
+      callRef.current = service;
       setCall(service);
 
       if (isInitiator) {
         const offer = await service.createOffer();
         sock.emit(CALL_SIGNALING_EVENTS.offer, {
           callId: cid,
-          toUserId: peerId,
+          toUserId: peerIdRef.current,
           sdp: offer,
         });
       } else {
@@ -150,13 +193,20 @@ export function CallPage() {
     return () => clearInterval(interval);
   };
 
-  const endCall = () => {
-    call?.endCall();
+  // `notifyServer` must stay false for the effect-cleanup path: React 18
+  // StrictMode (dev only) mounts every component twice, running an effect's
+  // cleanup immediately after its setup. If that cleanup told the server
+  // the call had ended, every real call would be killed within
+  // milliseconds of starting. Only an explicit user action (the End Call
+  // button) should actually end the call for the other side.
+  const endCall = (notifyServer: boolean) => {
+    callRef.current?.endCall();
+    callRef.current = null;
     setCall(null);
     setCallState("ended");
     setElapsed(0);
-    if (socket && callId) {
-      socket.emit("call_end", { callId });
+    if (notifyServer && signalSocketRef.current && callId) {
+      signalSocketRef.current.emit("call_end", { callId });
     }
   };
 
@@ -238,7 +288,7 @@ export function CallPage() {
           <button className="btn-secondary" onClick={toggleVideo}>{camOff ? t.call.cameraOn : t.call.cameraOff}</button>
           <button className="btn-secondary" onClick={switchCamera}>{t.call.switchCamera}</button>
           <button className="btn-secondary" onClick={toggleFullscreen}>{isFullscreen ? t.call.exitFullscreen : t.call.fullscreen}</button>
-          <button className="btn-primary" onClick={endCall}>{t.call.endCall}</button>
+          <button className="btn-primary" onClick={() => endCall(true)}>{t.call.endCall}</button>
         </div>
       </div>
     </Page>

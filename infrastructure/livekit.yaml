@@ -1,0 +1,10 @@
+# Self-hosted LiveKit SFU config for local development.
+# Keys here MUST match LIVEKIT_API_KEY / LIVEKIT_API_SECRET in your .env.
+port: 7880
+rtc:
+  tcp_port: 7881
+  port_range_start: 50000
+  port_range_end: 50100
+  use_external_ip: false
+keys:
+  devkey: change-me-livekit-secret

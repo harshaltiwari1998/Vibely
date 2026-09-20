@@ -1,5 +1,6 @@
 package com.vibely.app.ui.chat
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -23,6 +24,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.CardGiftcard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -32,10 +34,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -44,11 +51,26 @@ import com.vibely.app.ui.viewmodel.ChatViewModel
 import com.vibely.app.ui.viewmodel.UiState
 
 @Composable
-fun ChatScreen(userId: String, viewModel: ChatViewModel) {
-    LaunchedEffect(userId) { viewModel.loadMessages(userId) }
+fun ChatScreen(userId: String, myUserId: String?, viewModel: ChatViewModel, onWalletChanged: () -> Unit = {}) {
+    val context = LocalContext.current
+    LaunchedEffect(userId) {
+        viewModel.loadMessages(userId)
+        viewModel.loadGifts()
+    }
     val state by viewModel.messages.collectAsState()
     val input by viewModel.input.collectAsState()
+    val gifts by viewModel.gifts.collectAsState()
+    val isSendingGift by viewModel.isSendingGift.collectAsState()
+    val giftMessage by viewModel.giftMessage.collectAsState()
+    var showGifts by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
+
+    LaunchedEffect(giftMessage) {
+        giftMessage?.let {
+            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+            viewModel.consumeGiftMessage()
+        }
+    }
 
     Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF8FAFC))) {
         when (state) {
@@ -74,7 +96,7 @@ fun ChatScreen(userId: String, viewModel: ChatViewModel) {
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     items(messages) { msg ->
-                        val isMe = msg.senderId == "me"
+                        val isMe = msg.senderId == myUserId
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = if (isMe) Arrangement.End else Arrangement.Start
@@ -103,6 +125,31 @@ fun ChatScreen(userId: String, viewModel: ChatViewModel) {
                         }
                     }
                 }
+                if (showGifts) {
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth().background(Color.White).padding(horizontal = 12.dp, vertical = 8.dp)
+                    ) {
+                        items(gifts) { gift ->
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier
+                                    .alpha(if (isSendingGift) 0.6f else 1f)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color(0xFFF3F4F6))
+                                    .clickable(enabled = !isSendingGift) {
+                                        viewModel.sendGift(userId, gift.id, onWalletChanged)
+                                        showGifts = false
+                                    }
+                                    .padding(10.dp)
+                            ) {
+                                Text(gift.iconUrl, fontSize = 22.sp)
+                                Text(gift.name, fontSize = 10.sp, color = Color(0xFF111827))
+                                Text("💎 ${gift.coinCost}", fontSize = 10.sp, color = Color(0xFF6B7280))
+                            }
+                        }
+                    }
+                }
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -110,6 +157,9 @@ fun ChatScreen(userId: String, viewModel: ChatViewModel) {
                         .padding(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    IconButton(onClick = { showGifts = !showGifts }) {
+                        Icon(imageVector = Icons.Filled.CardGiftcard, contentDescription = "Send gift", tint = Color(0xFFD97706))
+                    }
                     OutlinedTextField(
                         value = input,
                         onValueChange = { viewModel.onInputChange(it) },

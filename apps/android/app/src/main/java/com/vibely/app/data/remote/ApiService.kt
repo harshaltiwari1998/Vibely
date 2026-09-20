@@ -1,0 +1,135 @@
+package com.vibely.app.data.remote
+
+import com.vibely.app.data.remote.dto.AcceptMatchResponse
+import com.vibely.app.data.remote.dto.AddCoinsRequest
+import com.vibely.app.data.remote.dto.ApiEnvelope
+import com.vibely.app.data.remote.dto.AuthResponse
+import com.vibely.app.data.remote.dto.CallHistoryResponse
+import com.vibely.app.data.remote.dto.CallInitiateRequest
+import com.vibely.app.data.remote.dto.CallResponse
+import com.vibely.app.data.remote.dto.ChatMessagesResponse
+import com.vibely.app.data.remote.dto.ChatSummaryResponse
+import com.vibely.app.data.remote.dto.GiftResponse
+import com.vibely.app.data.remote.dto.LiveRoomResponse
+import com.vibely.app.data.remote.dto.LiveSessionResponse
+import com.vibely.app.data.remote.dto.LoginRequest
+import com.vibely.app.data.remote.dto.MatchResponse
+import com.vibely.app.data.remote.dto.MatchStartRequest
+import com.vibely.app.data.remote.dto.NotificationsListResponse
+import com.vibely.app.data.remote.dto.RegisterRequest
+import com.vibely.app.data.remote.dto.SendGiftRequest
+import com.vibely.app.data.remote.dto.SendGiftResponse
+import com.vibely.app.data.remote.dto.SendMessageRequest
+import com.vibely.app.data.remote.dto.StartChatRequest
+import com.vibely.app.data.remote.dto.StartChatResponse
+import com.vibely.app.data.remote.dto.StartLiveRequest
+import com.vibely.app.data.remote.dto.UserResponse
+import com.vibely.app.data.remote.dto.VipPurchaseRequest
+import com.vibely.app.data.remote.dto.VipStatusResponse
+import com.vibely.app.data.remote.dto.VipTierResponse
+import com.vibely.app.data.remote.dto.WalletResponse
+import retrofit2.http.Body
+import retrofit2.http.GET
+import retrofit2.http.POST
+import retrofit2.http.Path
+
+interface ApiService {
+    @POST("auth/register")
+    suspend fun register(@Body dto: RegisterRequest): ApiEnvelope<AuthResponse>
+
+    @POST("auth/login")
+    suspend fun login(@Body dto: LoginRequest): ApiEnvelope<AuthResponse>
+
+    @POST("auth/verify-email")
+    suspend fun verifyEmail(@Body body: Map<String, String>): ApiEnvelope<Any>
+
+    @GET("users/me")
+    suspend fun getCurrentUser(): ApiEnvelope<UserResponse>
+
+    @GET("users")
+    suspend fun listUsers(): ApiEnvelope<List<UserResponse>>
+
+    @POST("matching/start")
+    suspend fun startMatch(@Body dto: MatchStartRequest): ApiEnvelope<MatchResponse>
+
+    @POST("matching/accept")
+    suspend fun acceptMatch(@Body body: Map<String, String>): ApiEnvelope<AcceptMatchResponse>
+
+    @POST("matching/cancel")
+    suspend fun cancelMatch(): ApiEnvelope<Any>
+
+    @POST("matching/decline")
+    suspend fun declineMatch(@Body body: Map<String, String>): ApiEnvelope<Any>
+
+    @POST("matching/skip")
+    suspend fun skipMatch(@Body body: Map<String, String>): ApiEnvelope<Any>
+
+    @GET("wallet")
+    suspend fun getWallet(): ApiEnvelope<WalletResponse>
+
+    @POST("wallet/coins")
+    suspend fun addCoins(@Body dto: AddCoinsRequest): ApiEnvelope<Any>
+
+    @GET("vip/tiers")
+    suspend fun getVipTiers(): ApiEnvelope<List<VipTierResponse>>
+
+    @GET("vip/status")
+    suspend fun getVipStatus(): ApiEnvelope<VipStatusResponse>
+
+    @POST("vip/purchase")
+    suspend fun purchaseVip(@Body dto: VipPurchaseRequest): ApiEnvelope<VipStatusResponse>
+
+    @POST("calls/initiate")
+    suspend fun initiateCall(@Body dto: CallInitiateRequest): ApiEnvelope<CallResponse>
+
+    @POST("calls/{callId}/accept")
+    suspend fun acceptCall(@Path("callId") callId: String): ApiEnvelope<Any>
+
+    @POST("calls/{callId}/reject")
+    suspend fun rejectCall(@Path("callId") callId: String): ApiEnvelope<Any>
+
+    @POST("calls/{callId}/end")
+    suspend fun endCall(@Path("callId") callId: String): ApiEnvelope<Any>
+
+    @GET("calls/history")
+    suspend fun callHistory(): ApiEnvelope<CallHistoryResponse>
+
+    @POST("live/start")
+    suspend fun startLive(@Body dto: StartLiveRequest): ApiEnvelope<LiveSessionResponse>
+
+    @POST("live/{id}/end")
+    suspend fun endLive(@Path("id") roomId: String): ApiEnvelope<Any>
+
+    @GET("live")
+    suspend fun listLiveRooms(): ApiEnvelope<List<LiveRoomResponse>>
+
+    @GET("live/{id}/join")
+    suspend fun joinLive(@Path("id") roomId: String): ApiEnvelope<LiveSessionResponse>
+
+    @GET("gifts")
+    suspend fun listGifts(): ApiEnvelope<List<GiftResponse>>
+
+    @POST("gifts/send")
+    suspend fun sendGift(@Body dto: SendGiftRequest): ApiEnvelope<SendGiftResponse>
+
+    @GET("chat")
+    suspend fun listChats(): ApiEnvelope<List<ChatSummaryResponse>>
+
+    @POST("chat/start")
+    suspend fun startChat(@Body dto: StartChatRequest): ApiEnvelope<StartChatResponse>
+
+    @GET("chat/{chatId}/messages")
+    suspend fun getChatMessages(@Path("chatId") chatId: String): ApiEnvelope<ChatMessagesResponse>
+
+    @POST("chat/message")
+    suspend fun sendChatMessage(@Body dto: SendMessageRequest): ApiEnvelope<Any>
+
+    @GET("notifications")
+    suspend fun listNotifications(): ApiEnvelope<NotificationsListResponse>
+
+    @POST("notifications/{id}/read")
+    suspend fun markNotificationRead(@Path("id") id: String): ApiEnvelope<Any>
+
+    @POST("notifications/read-all")
+    suspend fun markAllNotificationsRead(): ApiEnvelope<Any>
+}

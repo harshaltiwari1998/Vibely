@@ -11,6 +11,9 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // LiveKit's Android SDK pulls in a transitive dependency
+        // (com.github.davidliu:audioswitch) published only on JitPack.
+        maven("https://jitpack.io")
     }
 }
 

@@ -53,6 +53,8 @@ model User {
   verificationToken String? @unique
   verificationExpires DateTime?
   status       UserStatus @default(PENDING)
+  vipLevel     VipLevel   @default(NONE)
+  vipExpiresAt DateTime?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
@@ -85,6 +87,8 @@ model User {
   chatsOne       Chat[]           @relation("ChatParticipantOne")
   chatsTwo       Chat[]           @relation("ChatParticipantTwo")
   chatParticipantEntries ChatParticipant[]
+  liveRooms      LiveRoom[]       @relation("LiveHost")
+  liveViewerEntries LiveViewer[]
 
   @@index([country])
   @@index([status])
@@ -289,11 +293,56 @@ model GiftTransaction {
   coinAmount Int
   coinTransactionId String? @unique
   coinTransaction   CoinTransaction? @relation(fields: [coinTransactionId], references: [id])
+  liveRoomId String?
+  liveRoom   LiveRoom? @relation(fields: [liveRoomId], references: [id])
   createdAt  DateTime @default(now())
 
   @@index([senderId])
   @@index([receiverId])
   @@index([createdAt])
+  @@index([liveRoomId])
+}
+
+// ---------------------------------------------------------------------
+// Live streaming (1-to-many broadcast rooms)
+// ---------------------------------------------------------------------
+
+enum LiveRoomStatus {
+  LIVE
+  ENDED
+}
+
+model LiveRoom {
+  id          String         @id @default(uuid())
+  hostId      String
+  host        User           @relation("LiveHost", fields: [hostId], references: [id])
+  title       String
+  status      LiveRoomStatus @default(LIVE)
+  country     String?
+  coverUrl    String?
+  peakViewers Int            @default(0)
+  startedAt   DateTime       @default(now())
+  endedAt     DateTime?
+
+  viewers          LiveViewer[]
+  giftTransactions GiftTransaction[]
+
+  @@index([status])
+  @@index([hostId])
+  @@index([startedAt])
+}
+
+model LiveViewer {
+  id       String    @id @default(uuid())
+  roomId   String
+  room     LiveRoom  @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User      @relation(fields: [userId], references: [id])
+  joinedAt DateTime  @default(now())
+  leftAt   DateTime?
+
+  @@index([roomId])
+  @@index([userId])
 }
 
 model Wallet {
@@ -312,6 +361,16 @@ enum TransactionType {
   REFUND
   BONUS
   ADMIN_ADJUSTMENT
+  MATCH_COST
+  VIP_PURCHASE
+}
+
+enum VipLevel {
+  NONE
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
 }
 
 model CoinTransaction {

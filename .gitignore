@@ -29,6 +29,9 @@ yarn-error.log*
 prisma/migrations/dev.db
 *.db
 
+# Docker bind-mounted data (kept on-disk under the project, not committed)
+infrastructure/data/
+
 # Android
 *.apk
 *.aab

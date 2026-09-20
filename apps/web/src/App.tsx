@@ -30,6 +30,10 @@ import { TaskCenterPage } from "./pages/TaskCenterPage";
 import { InvitationPage } from "./pages/InvitationPage";
 import { SearchPage } from "./pages/SearchPage";
 import { ProfileEditPage } from "./pages/ProfileEditPage";
+import { LivePage } from "./pages/LivePage";
+import { GoLivePage } from "./pages/GoLivePage";
+import { LiveRoomPage } from "./pages/LiveRoomPage";
+import { IncomingMatchModal } from "./components/IncomingMatchModal";
 
 function Protected({ element }: { element: JSX.Element }) {
   return (
@@ -52,6 +56,9 @@ export function App() {
         <Route path="/discover" element={<Protected element={<DiscoverPage />} />} />
         <Route path="/match" element={<Protected element={<MatchPage />} />} />
         <Route path="/call" element={<Protected element={<CallPage />} />} />
+        <Route path="/live" element={<Protected element={<LivePage />} />} />
+        <Route path="/live/go-live" element={<Protected element={<GoLivePage />} />} />
+        <Route path="/live/:id" element={<Protected element={<LiveRoomPage />} />} />
         <Route path="/chat" element={<Protected element={<ChatPage />} />} />
         <Route path="/profile" element={<Protected element={<ProfilePage />} />} />
         <Route path="/profile/edit" element={<Protected element={<ProfileEditPage />} />} />
@@ -78,6 +85,7 @@ export function App() {
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <IncomingMatchModal />
     </BrowserRouter>
   );
 }

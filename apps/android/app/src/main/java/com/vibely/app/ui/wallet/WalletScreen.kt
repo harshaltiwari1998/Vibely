@@ -29,16 +29,35 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.widget.Toast
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.draw.alpha
+import com.vibely.app.ui.viewmodel.UiState
+import com.vibely.app.ui.viewmodel.WalletViewModel
 
 private data class DiamondPack(val diamonds: String, val strike: String, val price: String)
 
 @Composable
-fun WalletScreen() {
+fun WalletScreen(viewModel: WalletViewModel) {
     var recommendTab by remember { mutableStateOf(true) }
+    val context = LocalContext.current
+    val balanceState by viewModel.balance.collectAsState()
+    val balanceText = (balanceState as? UiState.Success)?.data?.toString() ?: "…"
+    val isPurchasing by viewModel.isPurchasing.collectAsState()
+    val rechargeMessage by viewModel.rechargeMessage.collectAsState()
+
+    LaunchedEffect(rechargeMessage) {
+        rechargeMessage?.let {
+            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+            viewModel.consumeRechargeMessage()
+        }
+    }
     val singlePacks = listOf(
         DiamondPack("18480", "16800", "INR 270.00"),
         DiamondPack("38640", "33600", "INR 540.00"),
@@ -55,7 +74,7 @@ fun WalletScreen() {
             Text("My Wallet", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 22.sp, modifier = Modifier.fillMaxWidth(), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
             Row(modifier = Modifier.padding(top = 24.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text("Diamond balance: ", color = Color.White, fontSize = 15.sp)
-                Text("4625 💎", color = Color.White, fontWeight = FontWeight.Black, fontSize = 24.sp)
+                Text("$balanceText 💎", color = Color.White, fontWeight = FontWeight.Black, fontSize = 24.sp)
             }
         }
         Row(modifier = Modifier.fillMaxWidth().background(Color.White)) {
@@ -63,7 +82,7 @@ fun WalletScreen() {
             Text("Recommend", color = if (recommendTab) Color(0xFF9350F5) else Color(0xFFB9AFC2), fontWeight = FontWeight.Bold, fontSize = 17.sp, modifier = Modifier.weight(1f).clickable { recommendTab = true }.padding(vertical = 18.dp), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
         }
         Column(modifier = Modifier.padding(16.dp)) {
-            Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Color(0xFFA855F7)).padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Color(0xFFA855F7)).clickable { Toast.makeText(context, "Opening recharge activity rewards…", Toast.LENGTH_SHORT).show() }.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text("Recharge Activity Rewards", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
                 Text("›", color = Color.White, fontSize = 22.sp)
             }
@@ -76,13 +95,23 @@ fun WalletScreen() {
                 }
             }
             Row(modifier = Modifier.padding(top = 16.dp).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("India ▾", color = Color(0xFF3C3A3C), modifier = Modifier.weight(1f).clip(RoundedCornerShape(24.dp)).background(Color.White).padding(horizontal = 16.dp, vertical = 12.dp))
-                Text("💳 all wallet", color = Color(0xFFE64545), fontWeight = FontWeight.Bold, modifier = Modifier.clip(RoundedCornerShape(24.dp)).background(Color(0xFFFFE7E7)).padding(horizontal = 16.dp, vertical = 12.dp))
+                Text("India ▾", color = Color(0xFF3C3A3C), modifier = Modifier.weight(1f).clip(RoundedCornerShape(24.dp)).background(Color.White).clickable { Toast.makeText(context, "Select country/region…", Toast.LENGTH_SHORT).show() }.padding(horizontal = 16.dp, vertical = 12.dp))
+                Text("💳 all wallet", color = Color(0xFFE64545), fontWeight = FontWeight.Bold, modifier = Modifier.clip(RoundedCornerShape(24.dp)).background(Color(0xFFFFE7E7)).clickable { Toast.makeText(context, "Opening payment methods…", Toast.LENGTH_SHORT).show() }.padding(horizontal = 16.dp, vertical = 12.dp))
             }
             Text("Weekly Special Offers", color = Color(0xFF19131F), fontWeight = FontWeight.Black, fontSize = 20.sp, modifier = Modifier.padding(top = 22.dp))
             LazyVerticalGrid(columns = GridCells.Fixed(3), modifier = Modifier.padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 items(singlePacks + bundlePacks) { pack ->
-                    Column(modifier = Modifier.clip(RoundedCornerShape(14.dp)).background(Color.White).padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Column(
+                        modifier = Modifier
+                            .alpha(if (isPurchasing) 0.6f else 1f)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(Color.White)
+                            .clickable(enabled = !isPurchasing) {
+                                viewModel.mockRecharge(pack.diamonds.toIntOrNull() ?: 0)
+                            }
+                            .padding(12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
                         Text("💎 ${pack.diamonds}", fontWeight = FontWeight.Black, fontSize = 15.sp, color = Color(0xFF19131F))
                         Text(pack.strike, fontSize = 11.sp, color = Color(0xFFB9AFC2), textDecoration = TextDecoration.LineThrough)
                         Spacer(modifier = Modifier.height(8.dp))

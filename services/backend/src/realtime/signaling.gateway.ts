@@ -7,25 +7,22 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from "@nestjs/websockets";
-import { Server, Socket } from "socket.io";
+import { Namespace, Socket } from "socket.io";
 import { RealtimeEvent } from "@vibely/types";
-import { PresenceService } from "./presence.service";
 import { createLogger } from "@vibely/shared";
 import { JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
 import { PrismaService } from "../database/prisma.service";
 import { CallsService } from "../modules/calls/calls.service";
-import { UnauthorizedException } from "@nestjs/common";
 
 const logger = createLogger("SignalingGateway");
 
 @WebSocketGateway({ cors: { origin: "*" }, namespace: "/signal" })
 export class SignalingGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
-  server: Server;
+  server: Namespace;
 
   constructor(
-    private readonly presence: PresenceService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
     private readonly prisma: PrismaService,
@@ -53,6 +50,10 @@ export class SignalingGateway implements OnGatewayConnection, OnGatewayDisconnec
       return;
     }
     client.data = { userId: payload.sub };
+    // Socket IDs are per-namespace, so the default namespace's presence
+    // tracking (used elsewhere) can't be reused to target sockets here -
+    // each user joins their own room within this namespace instead.
+    await client.join(payload.sub);
     logger.debug("Signaling client connected", { socketId: client.id, userId: payload.sub });
   }
 
@@ -65,39 +66,30 @@ export class SignalingGateway implements OnGatewayConnection, OnGatewayDisconnec
   async handleOffer(@ConnectedSocket() client: Socket, @MessageBody() payload: { callId: string; toUserId: string; sdp: unknown }): Promise<void> {
     const fromUserId = client.data?.userId;
     if (!fromUserId) return;
-    const targetSocketId = await this.presence.getSocketId(payload.toUserId);
-    if (targetSocketId) {
-      this.server.to(targetSocketId).emit(RealtimeEvent.CallOffer, {
-        ...payload,
-        fromUserId,
-      });
-    }
+    this.server.to(payload.toUserId).emit(RealtimeEvent.CallOffer, {
+      ...payload,
+      fromUserId,
+    });
   }
 
   @SubscribeMessage(RealtimeEvent.CallAnswer)
   async handleAnswer(@ConnectedSocket() client: Socket, @MessageBody() payload: { callId: string; toUserId: string; sdp: unknown }): Promise<void> {
     const fromUserId = client.data?.userId;
     if (!fromUserId) return;
-    const targetSocketId = await this.presence.getSocketId(payload.toUserId);
-    if (targetSocketId) {
-      this.server.to(targetSocketId).emit(RealtimeEvent.CallAnswer, {
-        ...payload,
-        fromUserId,
-      });
-    }
+    this.server.to(payload.toUserId).emit(RealtimeEvent.CallAnswer, {
+      ...payload,
+      fromUserId,
+    });
   }
 
   @SubscribeMessage(RealtimeEvent.IceCandidate)
   async handleIce(@ConnectedSocket() client: Socket, @MessageBody() payload: { callId: string; toUserId: string; candidate: unknown }): Promise<void> {
     const fromUserId = client.data?.userId;
     if (!fromUserId) return;
-    const targetSocketId = await this.presence.getSocketId(payload.toUserId);
-    if (targetSocketId) {
-      this.server.to(targetSocketId).emit(RealtimeEvent.IceCandidate, {
-        ...payload,
-        fromUserId,
-      });
-    }
+    this.server.to(payload.toUserId).emit(RealtimeEvent.IceCandidate, {
+      ...payload,
+      fromUserId,
+    });
   }
 
   @SubscribeMessage(RealtimeEvent.CallReady)
@@ -109,10 +101,7 @@ export class SignalingGateway implements OnGatewayConnection, OnGatewayDisconnec
     });
     if (!call) return;
     const otherUserId = call.initiatorId === userId ? call.receiverId : call.initiatorId;
-    const targetSocketId = await this.presence.getSocketId(otherUserId);
-    if (targetSocketId) {
-      this.server.to(targetSocketId).emit(RealtimeEvent.CallReady, payload);
-    }
+    this.server.to(otherUserId).emit(RealtimeEvent.CallReady, payload);
   }
 
   @SubscribeMessage("call_end")
@@ -139,7 +128,7 @@ export class SignalingGateway implements OnGatewayConnection, OnGatewayDisconnec
 
   private extractToken(client: Socket): string | null {
     const auth = client.handshake.auth?.token as string | undefined;
-    if (auth) return auth;
+    if (auth) return auth.replace(/^Bearer\s+/i, "").trim();
     const query = (client.handshake.query?.token as string | undefined);
     if (query) return query.replace(/^Bearer\s+/i, "").trim();
     const header = client.handshake.headers?.authorization as string | undefined;

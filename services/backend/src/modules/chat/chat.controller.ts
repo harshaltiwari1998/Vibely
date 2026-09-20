@@ -21,6 +21,11 @@ export class ChatController {
     return this.chat.listChats(user.id);
   }
 
+  @Post("start")
+  start(@CurrentUser() user: { id: string }, @Body() body: { userId: string }) {
+    return this.chat.getOrCreateChat(user.id, body.userId);
+  }
+
   @Get(":chatId/messages")
   messages(@Param("chatId") chatId: string, @CurrentUser() user: { id: string }) {
     return this.chat.getMessages(chatId, user.id);

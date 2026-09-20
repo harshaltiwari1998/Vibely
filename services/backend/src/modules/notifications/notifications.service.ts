@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from "@nestjs/common";
+import { forwardRef, Inject, Injectable, NotFoundException, ForbiddenException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../../database/prisma.service";
 import { RealtimeGateway } from "../../realtime/realtime.gateway";
 import { RealtimeEvent } from "@vibely/types";
@@ -13,7 +13,7 @@ const logger = createLogger("NotificationsService");
 export class NotificationsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly gateway: RealtimeGateway,
+    @Inject(forwardRef(() => RealtimeGateway)) private readonly gateway: RealtimeGateway,
     private readonly devicesService: DevicesService,
     private readonly pushService: PushNotificationService,
   ) {}

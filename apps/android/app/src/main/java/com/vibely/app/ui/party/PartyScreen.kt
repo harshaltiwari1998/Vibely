@@ -22,9 +22,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.widget.Toast
 
 data class PartyRoom(val title: String, val members: Int, val tag: String, val color: Color)
 
@@ -37,6 +39,7 @@ private val partyRooms = listOf(
 
 @Composable
 fun PartyRoomGrid(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
     LazyVerticalGrid(columns = GridCells.Fixed(2), modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             Column(
@@ -44,13 +47,13 @@ fun PartyRoomGrid(modifier: Modifier = Modifier) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Bottom
             ) {
-                Button(onClick = { }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD8A94A))) {
+                Button(onClick = { Toast.makeText(context, "Opening family creation…", Toast.LENGTH_SHORT).show() }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD8A94A))) {
                     Text("Join/Create family", color = Color(0xFF3B2506), fontWeight = FontWeight.Bold, fontSize = 12.sp)
                 }
             }
         }
         items(partyRooms) { room ->
-            Box(modifier = Modifier.aspectRatio(0.72f).clip(RoundedCornerShape(16.dp)).background(Brush.verticalGradient(listOf(room.color.copy(alpha = 0.5f), room.color)))) {
+            Box(modifier = Modifier.aspectRatio(0.72f).clip(RoundedCornerShape(16.dp)).background(Brush.verticalGradient(listOf(room.color.copy(alpha = 0.5f), room.color))).clickable { Toast.makeText(context, "Joining ${room.title}…", Toast.LENGTH_SHORT).show() }) {
                 Column(modifier = Modifier.align(Alignment.BottomStart).padding(12.dp)) {
                     Text("👥 ${room.members}", color = Color.White, fontSize = 12.sp)
                     Text(room.title, color = Color.White, fontWeight = FontWeight.Black, fontSize = 15.sp, maxLines = 1)

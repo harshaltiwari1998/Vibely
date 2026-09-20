@@ -210,11 +210,11 @@ export class AuthService {
   private issueTokens(sub: string, email: string, role: Role) {
     const accessToken = this.jwt.sign(
       { sub, email, role },
-      { secret: this.config.get<string>("app.jwtSecret"), expiresIn: this.config.get<string>("app.jwtExpiresIn") },
+      { secret: this.config.get<string>("app.jwtSecret"), expiresIn: this.config.get<number>("app.jwtExpiresIn") },
     );
     const refreshToken = this.jwt.sign(
       { sub, email, role },
-      { secret: this.config.get<string>("app.jwtRefreshSecret"), expiresIn: this.config.get<string>("app.jwtRefreshExpiresIn") },
+      { secret: this.config.get<string>("app.jwtRefreshSecret"), expiresIn: this.config.get<number>("app.jwtRefreshExpiresIn") },
     );
     return { accessToken, refreshToken };
   }

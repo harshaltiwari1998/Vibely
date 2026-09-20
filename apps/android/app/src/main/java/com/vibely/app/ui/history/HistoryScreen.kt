@@ -26,15 +26,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.widget.Toast
 import com.vibely.app.ui.viewmodel.CallViewModel
 import com.vibely.app.ui.viewmodel.UiState
 
 @Composable
 fun HistoryScreen(viewModel: CallViewModel) {
     val state = viewModel.history.collectAsState().value
+    val context = LocalContext.current
 
     Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF8FAFC)).padding(16.dp)) {
         Text("Call History", fontWeight = FontWeight.Bold, fontSize = 22.sp, color = Color(0xFF111827))
@@ -59,7 +62,7 @@ fun HistoryScreen(viewModel: CallViewModel) {
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(16.dp))
                                 .background(Color.White)
-                                .clickable { }
+                                .clickable { Toast.makeText(context, "${item.userId} · ${item.status.name} · ${item.durationSeconds}s", Toast.LENGTH_SHORT).show() }
                                 .padding(14.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {

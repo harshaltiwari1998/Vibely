@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import api, { unwrap } from "../lib/api";
+import { disconnectSocket } from "../lib/socket";
 
 interface AuthState {
   accessToken: string | null;
@@ -112,5 +113,6 @@ export async function register(payload: {
 
 export async function logout() {
   await api.post("/auth/logout").catch(() => undefined);
+  disconnectSocket();
   useAuthStore.getState().clear();
 }

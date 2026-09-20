@@ -1,79 +1,62 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Page } from "../components/Page";
-import api, { unwrap } from "../lib/api";
-import { io, Socket } from "socket.io-client";
+import api from "../lib/api";
+import { getSocket } from "../lib/socket";
 import { useAuthStore } from "../store/auth";
 import { RealtimeEvent } from "@vibely/types";
 
-type MatchState = "idle" | "searching" | "matched" | "cancelled" | "expired";
+type MatchState = "idle" | "searching" | "expired";
 
 export function MatchPage() {
   const [status, setStatus] = useState<MatchState>("idle");
-  const [peer, setPeer] = useState<{ username: string; avatarUrl?: string } | null>(null);
-  const [matchId, setMatchId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const accessToken = useAuthStore((s) => s.accessToken);
-  const wsUrl = (import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:4000";
+  const userId = useAuthStore((s) => s.userId);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!accessToken) return;
-    const socket: Socket = io(wsUrl, {
-      auth: { token: `Bearer ${accessToken}` },
-      transports: ["websocket"],
-    });
+    const socket = getSocket(accessToken);
 
-    socket.on("connect", () => {
-      setError(null);
-    });
-
-    socket.on(RealtimeEvent.MatchSearching, () => {
+    const onSearching = () => {
       setStatus("searching");
       setError(null);
-    });
-
-    socket.on(RealtimeEvent.MatchFound, (payload: { matchId: string; peerId: string }) => {
-      setStatus("matched");
-      setMatchId(payload.matchId);
-      fetchPeer(payload.peerId);
-    });
-
-    socket.on(RealtimeEvent.MatchCancelled, (payload: { matchId: string; reason?: string }) => {
-      setStatus("cancelled");
-      setMatchId(payload.matchId);
-      setError(payload.reason || "Match cancelled");
-    });
-
-    socket.on(RealtimeEvent.MatchExpired, (payload: { matchId: string; reason?: string }) => {
+    };
+    const onCancelled = (payload: { reason?: string }) => {
       setStatus("expired");
-      setMatchId(payload.matchId);
-      setError(payload.reason || "Match expired");
-    });
+      setError(payload.reason || "Match request ended");
+    };
+    const onExpired = (payload: { reason?: string }) => {
+      setStatus("expired");
+      setError(payload.reason || "No one accepted in time");
+    };
+    const onCallStarted = (payload: { callId: string; initiatorId: string; receiverId: string }) => {
+      const isInitiator = payload.initiatorId === userId;
+      const peerId = isInitiator ? payload.receiverId : payload.initiatorId;
+      navigate("/call", { state: { callId: payload.callId, peerId, isInitiator } });
+    };
 
-    socket.on("disconnect", () => {
-      setStatus("idle");
-    });
+    socket.on(RealtimeEvent.MatchSearching, onSearching);
+    socket.on(RealtimeEvent.MatchCancelled, onCancelled);
+    socket.on(RealtimeEvent.MatchExpired, onExpired);
+    socket.on(RealtimeEvent.CallStarted, onCallStarted);
 
     return () => {
-      socket.disconnect();
+      socket.off(RealtimeEvent.MatchSearching, onSearching);
+      socket.off(RealtimeEvent.MatchCancelled, onCancelled);
+      socket.off(RealtimeEvent.MatchExpired, onExpired);
+      socket.off(RealtimeEvent.CallStarted, onCallStarted);
     };
-  }, [accessToken, wsUrl]);
-
-  const fetchPeer = async (peerId: string) => {
-    try {
-      const { data } = await api.get(`/users/${peerId}`);
-      const user = unwrap<{ username: string; avatarUrl?: string }>(data);
-      setPeer(user);
-    } catch {
-      setPeer(null);
-    }
-  };
+  }, [accessToken, userId, navigate]);
 
   const startMatching = async () => {
     setError(null);
     try {
       await api.post("/matching/start", {});
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to start matching");
+    } catch (err) {
+      const apiMessage = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setError(apiMessage || "Failed to start matching");
       setStatus("idle");
     }
   };
@@ -85,41 +68,6 @@ export function MatchPage() {
       // ignore
     }
     setStatus("idle");
-    setMatchId(null);
-    setPeer(null);
-  };
-
-  const acceptMatch = async () => {
-    if (!matchId) return;
-    try {
-      await api.post("/matching/accept", { matchId });
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to accept");
-    }
-  };
-
-  const declineMatch = async () => {
-    if (!matchId) return;
-    try {
-      await api.post("/matching/decline", { matchId });
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to decline");
-    }
-    setStatus("idle");
-    setMatchId(null);
-    setPeer(null);
-  };
-
-  const skipMatch = async () => {
-    if (!matchId) return;
-    try {
-      await api.post("/matching/skip", { matchId });
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to skip");
-    }
-    setStatus("idle");
-    setMatchId(null);
-    setPeer(null);
   };
 
   return (
@@ -146,28 +94,11 @@ export function MatchPage() {
         )}
         {status === "searching" && (
           <div className="flex flex-col items-center gap-2">
-            <p className="text-sm text-white/80">Searching for someone nearby...</p>
+            <p className="text-sm text-white/80">Ringing online users nearby...</p>
             <button className="rounded-full bg-white/20 px-6 py-2 font-semibold" onClick={cancelMatching}>Cancel</button>
           </div>
         )}
-        {status === "matched" && peer && (
-          <div className="flex flex-col items-center gap-3">
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-200 text-lg font-bold text-gray-600">
-                {peer.avatarUrl ? <img src={peer.avatarUrl} alt="" className="h-full w-full rounded-full object-cover" /> : peer.username[0].toUpperCase()}
-              </div>
-              <div>
-                <p className="font-semibold">{peer.username}</p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <button className="rounded-full bg-[#ff267b] px-4 py-2 font-bold" onClick={acceptMatch}>Accept</button>
-              <button className="rounded-full bg-white/20 px-4 py-2 font-bold" onClick={skipMatch}>Skip</button>
-              <button className="rounded-full bg-white/20 px-4 py-2 font-bold" onClick={declineMatch}>Decline</button>
-            </div>
-          </div>
-        )}
-        {(status === "cancelled" || status === "expired") && (
+        {status === "expired" && (
           <div className="flex flex-col items-center gap-2">
             <p className="text-sm text-red-200">{error || "Match ended"}</p>
             <button className="rounded-full bg-[#ff267b] px-6 py-2 font-bold" onClick={() => setStatus("idle")}>Try again</button>

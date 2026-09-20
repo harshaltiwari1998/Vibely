@@ -2,6 +2,7 @@ import {
   CallStatus,
   CallType,
   Gender,
+  LiveRoomStatus,
   MatchStatus,
   MessageType,
   NotificationType,
@@ -128,7 +129,28 @@ export interface GiftTransaction {
   senderId: string;
   receiverId: string;
   coinAmount: number;
+  liveRoomId?: string | null;
   createdAt: string;
+}
+
+export interface LiveRoom {
+  id: string;
+  hostId: string;
+  title: string;
+  status: LiveRoomStatus;
+  country?: string | null;
+  coverUrl?: string | null;
+  peakViewers: number;
+  startedAt: string;
+  endedAt?: string | null;
+}
+
+export interface LiveViewer {
+  id: string;
+  roomId: string;
+  userId: string;
+  joinedAt: string;
+  leftAt?: string | null;
 }
 
 export interface Wallet {

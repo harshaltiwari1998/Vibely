@@ -69,6 +69,17 @@ export interface SendGiftDto {
   giftId: string;
 }
 
+export interface StartLiveDto {
+  title: string;
+  country?: string;
+  coverUrl?: string;
+}
+
+export interface SendLiveGiftDto {
+  roomId: string;
+  giftId: string;
+}
+
 export interface CreateReportDto {
   targetUserId: string;
   targetType: "USER" | "MESSAGE" | "PROFILE" | "CALL" | "GIFT" | "OTHER";

@@ -15,7 +15,7 @@ export function Layout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-[#f7f7f8] text-gray-900">
       <Navbar />
-      <main className="mx-auto max-w-6xl px-4 py-5 pb-24 md:pb-6">{children}</main>
+      <main className="mx-auto max-w-6xl px-3 py-4 pb-24 md:px-4 md:py-5 md:pb-6">{children}</main>
     </div>
   );
 }

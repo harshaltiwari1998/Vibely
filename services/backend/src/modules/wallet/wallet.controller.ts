@@ -1,6 +1,9 @@
 import { Body, Controller, Get, Post, UseGuards } from "@nestjs/common";
 import { WalletService } from "./wallet.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
+import { RolesGuard } from "../../common/guards/roles.guard";
+import { Roles } from "../../common/decorators/roles.decorator";
+import { Role } from "../../common/constants/roles";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 
 @Controller("wallet")
@@ -24,7 +27,9 @@ export class WalletController {
   }
 
   @Post("admin/adjust")
-  adminAdjust(@CurrentUser() user: { id: string }, @Body() body: { userId: string; amount: number; reason: string }) {
+  @UseGuards(RolesGuard)
+  @Roles(Role.Admin, Role.SuperAdmin)
+  adminAdjust(@Body() body: { userId: string; amount: number; reason: string }) {
     return this.wallet.adminAdjust(body.userId, body.amount, body.reason);
   }
 }

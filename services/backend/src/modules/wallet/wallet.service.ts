@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
+import { forwardRef, Inject, Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../../database/prisma.service";
 import { RealtimeGateway } from "../../realtime/realtime.gateway";
 import { RealtimeEvent } from "@vibely/types";
@@ -11,7 +11,7 @@ const logger = createLogger("WalletService");
 export class WalletService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly gateway: RealtimeGateway,
+    @Inject(forwardRef(() => RealtimeGateway)) private readonly gateway: RealtimeGateway,
   ) {}
 
   async getBalance(userId: string) {

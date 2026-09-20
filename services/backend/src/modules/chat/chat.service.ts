@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException, UnauthorizedException } from "@nestjs/common";
+import { forwardRef, Inject, Injectable, NotFoundException, ForbiddenException, BadRequestException, UnauthorizedException } from "@nestjs/common";
 import { PrismaService } from "../../database/prisma.service";
 import { RealtimeGateway } from "../../realtime/realtime.gateway";
 import { RedisService } from "../../cache/redis.service";
@@ -15,9 +15,32 @@ const RATE_LIMIT_MAX = 30;
 export class ChatService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly gateway: RealtimeGateway,
+    @Inject(forwardRef(() => RealtimeGateway)) private readonly gateway: RealtimeGateway,
     private readonly redis: RedisService,
   ) {}
+
+  async getOrCreateChat(userId: string, targetUserId: string) {
+    if (userId === targetUserId) {
+      throw new BadRequestException("Cannot start a chat with yourself");
+    }
+    const target = await this.prisma.user.findUnique({ where: { id: targetUserId } });
+    if (!target) throw new NotFoundException("User not found");
+
+    const existing = await this.prisma.chat.findFirst({
+      where: {
+        OR: [
+          { participantOneId: userId, participantTwoId: targetUserId },
+          { participantOneId: targetUserId, participantTwoId: userId },
+        ],
+      },
+    });
+    if (existing) return { id: existing.id };
+
+    const chat = await this.prisma.chat.create({
+      data: { participantOneId: userId, participantTwoId: targetUserId },
+    });
+    return { id: chat.id };
+  }
 
   async listChats(userId: string) {
     const chats = await this.prisma.chat.findMany({

@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
+import { forwardRef, Inject, Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../../database/prisma.service";
 import { WalletService } from "../wallet/wallet.service";
+import { VipService } from "../vip/vip.service";
 import { RealtimeGateway } from "../../realtime/realtime.gateway";
 import { RealtimeEvent } from "@vibely/types";
 import { TransactionType } from "@prisma/client";
@@ -22,7 +23,8 @@ export class GiftsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly wallet: WalletService,
-    private readonly gateway: RealtimeGateway,
+    private readonly vip: VipService,
+    @Inject(forwardRef(() => RealtimeGateway)) private readonly gateway: RealtimeGateway,
   ) {}
 
   async listGifts() {
@@ -51,7 +53,10 @@ export class GiftsService {
       throw new NotFoundException("Gift not found or inactive");
     }
 
-    const coinAmount = gift.coinCost;
+    const discountPercent = await this.vip.getGiftDiscountPercent(senderId);
+    const coinAmount = discountPercent > 0
+      ? Math.max(1, Math.round(gift.coinCost * (1 - discountPercent / 100)))
+      : gift.coinCost;
 
     const { senderWallet, receiverWallet, senderTransaction, receiverTransaction } = await this.wallet.sendGiftCoins(
       senderId,

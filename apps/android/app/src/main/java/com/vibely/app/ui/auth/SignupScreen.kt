@@ -1,5 +1,6 @@
 package com.vibely.app.ui.auth
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -8,17 +9,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,19 +28,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import android.widget.Toast
+import com.vibely.app.ui.viewmodel.AuthState
+import com.vibely.app.ui.viewmodel.AuthViewModel
 
 @Composable
-fun SignupScreen(onSignupSuccess: (String) -> Unit) {
+fun SignupScreen(viewModel: AuthViewModel, onNavigateToLogin: () -> Unit) {
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
-    var error by remember { mutableStateOf<String?>(null) }
+    var country by remember { mutableStateOf("India") }
+    val state by viewModel.state.collectAsState()
     val context = LocalContext.current
 
     Column(
@@ -57,44 +56,54 @@ fun SignupScreen(onSignupSuccess: (String) -> Unit) {
         Spacer(modifier = Modifier.height(12.dp))
         OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("Email") }, modifier = Modifier.fillMaxWidth())
         Spacer(modifier = Modifier.height(12.dp))
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("Password") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-            trailingIcon = {
-                IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Icon(
-                        imageVector = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
-                        contentDescription = null
-                    )
-                }
-            }
-        )
-        if (error != null) {
+        OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Password") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+        if (state is AuthState.Error) {
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = error ?: "", color = Color(0xFFEF4444), fontSize = 12.sp)
+            Text(text = (state as AuthState.Error).message, color = Color(0xFFEF4444), fontSize = 12.sp)
         }
         Spacer(modifier = Modifier.height(20.dp))
         Button(
             onClick = {
                 if (name.isBlank() || email.isBlank() || password.isBlank()) {
-                    error = "All fields are required"
-                } else if (password.length < 6) {
-                    error = "Password must be at least 6 characters"
+                    Toast.makeText(context, "All fields are required", Toast.LENGTH_SHORT).show()
+                } else if (!email.contains("@")) {
+                    Toast.makeText(context, "Enter a valid email", Toast.LENGTH_SHORT).show()
                 } else {
-                    error = null
-                    Toast.makeText(context, "Account created successfully", Toast.LENGTH_SHORT).show()
-                    onSignupSuccess(email)
+                    viewModel.register(
+                        username = name,
+                        email = email,
+                        password = password,
+                        dateOfBirth = "2000-01-01",
+                        gender = "MALE",
+                        country = country,
+                        language = "en"
+                    )
+                    Toast.makeText(context, "Account created", Toast.LENGTH_SHORT).show()
                 }
             },
             modifier = Modifier.fillMaxWidth().height(52.dp),
             shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7C3AED))
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7C3AED)),
+            enabled = state != AuthState.Loading
         ) {
-            Text("Sign up", fontWeight = FontWeight.Bold)
+            if (state == AuthState.Loading) {
+                CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp))
+            } else {
+                Text("Sign up", fontWeight = FontWeight.Bold)
+            }
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+        Button(
+            onClick = onNavigateToLogin,
+            modifier = Modifier.fillMaxWidth().height(52.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color(0xFF7C3AED)),
+            enabled = state != AuthState.Loading
+        ) {
+            Text("Login", fontWeight = FontWeight.Bold)
+        }
+        if (state == AuthState.Loading) {
+            LinearProgressIndicator(modifier = Modifier.fillMaxWidth().height(4.dp))
         }
     }
 }

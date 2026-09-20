@@ -49,6 +49,23 @@ export class PresenceService implements OnModuleInit, OnModuleDestroy {
     return this.redis.get(`${this.prefix}${userId}`);
   }
 
+  async getOnlineUserIds(): Promise<string[]> {
+    if (!this.redis.isReady()) return [];
+    const client = this.redis.getClient();
+    if (!client) return [];
+    const userIds: string[] = [];
+    let cursor = "0";
+    do {
+      const result = await client.scan(cursor, "MATCH", `${this.prefix}*`, "COUNT", "100");
+      const [next, keys] = result as [string, string[]];
+      cursor = next;
+      for (const key of keys) {
+        userIds.push(key.replace(this.prefix, ""));
+      }
+    } while (cursor !== "0");
+    return userIds;
+  }
+
   private async cleanupExpired(): Promise<void> {
     if (!this.redis.isReady()) return;
     try {

@@ -91,3 +91,8 @@ export enum NotificationType {
   System = "SYSTEM",
   Report = "REPORT",
 }
+
+export enum LiveRoomStatus {
+  Live = "LIVE",
+  Ended = "ENDED",
+}

@@ -61,6 +61,7 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
       return;
     }
     client.data = { userId: payload.sub };
+    await client.join(payload.sub);
     await this.presence.markOnline(payload.sub, client.id);
     this.server.emit(RealtimeEvent.UserOnline, { userId: payload.sub });
     logger.debug("Client connected", { socketId: client.id, userId: payload.sub });
@@ -69,10 +70,19 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
   async handleDisconnect(client: Socket): Promise<void> {
     const userId = client.data?.userId;
     if (userId) {
-      await this.presence.markOffline(userId);
-      this.server.emit(RealtimeEvent.UserOffline, { userId });
-      await this.matching.handleDisconnect(userId);
-      await this.endActiveCalls(userId);
+      try {
+        await this.presence.markOffline(userId);
+        this.server.emit(RealtimeEvent.UserOffline, { userId });
+        await this.matching.handleDisconnect(userId);
+        await this.endActiveCalls(userId);
+      } catch (error) {
+        // handleDisconnect runs outside Nest's WsExceptionsHandler, so an
+        // uncaught error here would crash the whole process.
+        logger.warn("Disconnect cleanup failed", {
+          userId,
+          error: error instanceof Error ? error.message : "unknown",
+        });
+      }
     }
     logger.debug("Client disconnected", { socketId: client.id, userId });
   }
@@ -124,22 +134,9 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     const userId = client.data?.userId;
     if (!userId) return;
     try {
-      const result = await this.matching.acceptMatch(userId, body.matchId);
-      if (result.success && result.otherUserId) {
-        const call = await this.calls.initiate(userId, result.otherUserId);
-        this.server.to(userId).emit(RealtimeEvent.CallStarted, {
-          callId: call.id,
-          initiatorId: userId,
-          receiverId: result.otherUserId,
-          type: "VIDEO",
-        });
-        this.server.to(result.otherUserId).emit(RealtimeEvent.CallStarted, {
-          callId: call.id,
-          initiatorId: userId,
-          receiverId: result.otherUserId,
-          type: "VIDEO",
-        });
-      }
+      // acceptMatch already deducts coins, creates the call and emits
+      // CallStarted to both participants.
+      await this.matching.acceptMatch(userId, body.matchId);
     } catch {
       // ignore
     }
@@ -284,7 +281,7 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
 
   private extractToken(client: Socket): string | null {
     const auth = client.handshake.auth?.token as string | undefined;
-    if (auth) return auth;
+    if (auth) return auth.replace(/^Bearer\s+/i, "").trim();
     const query = (client.handshake.query?.token as string | undefined);
     if (query) return query.replace(/^Bearer\s+/i, "").trim();
     const header = client.handshake.headers?.authorization as string | undefined;

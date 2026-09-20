@@ -34,5 +34,5 @@ enum class CallType {
 }
 
 enum class CallStatus {
-    MISSED, COMPLETED, ONGOING
+    INITIATED, RINGING, ACTIVE, ENDED, MISSED, REJECTED, FAILED
 }

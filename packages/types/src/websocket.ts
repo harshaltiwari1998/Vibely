@@ -40,6 +40,8 @@ export enum RealtimeEvent {
   MatchDecline = "match_decline",
   MatchSearching = "match_searching",
   MatchExpired = "match_expired",
+  MatchRequestIncoming = "match_request_incoming",
+  MatchRequestClosed = "match_request_closed",
 
   // WebRTC signaling
   CallOffer = "call_offer",
@@ -73,6 +75,13 @@ export enum RealtimeEvent {
   NotificationCreated = "notification_created",
   NotificationRead = "notification_read",
   NotificationDeleted = "notification_deleted",
+
+  // Live streaming
+  LiveViewerJoined = "live_viewer_joined",
+  LiveViewerLeft = "live_viewer_left",
+  LiveChatMessage = "live_chat_message",
+  LiveGiftSent = "live_gift_sent",
+  LiveEnded = "live_ended",
 }
 
 export interface PresencePayload {
@@ -111,6 +120,17 @@ export interface MatchDeclinePayload {
 export interface MatchExpiredPayload {
   matchId: string;
   reason?: string;
+}
+
+export interface MatchRequestIncomingPayload {
+  matchId: string;
+  requesterId: string;
+  requesterUsername: string;
+  requesterAvatarUrl?: string | null;
+}
+
+export interface MatchRequestClosedPayload {
+  matchId: string;
 }
 
 export interface MatchFoundPayload {
@@ -241,6 +261,41 @@ export interface NotificationDeletedPayload {
   notificationId: string;
 }
 
+export interface LiveViewerJoinedPayload {
+  roomId: string;
+  userId: string;
+  username: string;
+  viewerCount: number;
+}
+
+export interface LiveViewerLeftPayload {
+  roomId: string;
+  userId: string;
+  viewerCount: number;
+}
+
+export interface LiveChatMessagePayload {
+  roomId: string;
+  userId: string;
+  username: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface LiveGiftSentPayload {
+  roomId: string;
+  giftId: string;
+  giftName: string;
+  iconUrl: string;
+  senderId: string;
+  senderName: string;
+  coinAmount: number;
+}
+
+export interface LiveEndedPayload {
+  roomId: string;
+}
+
 export type RealtimePayloadMap = {
   [RealtimeEvent.UserConnected]: PresencePayload;
   [RealtimeEvent.UserDisconnected]: PresencePayload;
@@ -255,6 +310,8 @@ export type RealtimePayloadMap = {
   [RealtimeEvent.MatchDecline]: MatchDeclinePayload;
   [RealtimeEvent.MatchSearching]: MatchSearchingPayload;
   [RealtimeEvent.MatchExpired]: MatchExpiredPayload;
+  [RealtimeEvent.MatchRequestIncoming]: MatchRequestIncomingPayload;
+  [RealtimeEvent.MatchRequestClosed]: MatchRequestClosedPayload;
   [RealtimeEvent.CallOffer]: CallOfferPayload;
   [RealtimeEvent.CallAnswer]: CallAnswerPayload;
   [RealtimeEvent.IceCandidate]: IceCandidatePayload;
@@ -276,4 +333,9 @@ export type RealtimePayloadMap = {
   [RealtimeEvent.NotificationCreated]: NotificationCreatedPayload;
   [RealtimeEvent.NotificationRead]: NotificationReadPayload;
   [RealtimeEvent.NotificationDeleted]: NotificationDeletedPayload;
+  [RealtimeEvent.LiveViewerJoined]: LiveViewerJoinedPayload;
+  [RealtimeEvent.LiveViewerLeft]: LiveViewerLeftPayload;
+  [RealtimeEvent.LiveChatMessage]: LiveChatMessagePayload;
+  [RealtimeEvent.LiveGiftSent]: LiveGiftSentPayload;
+  [RealtimeEvent.LiveEnded]: LiveEndedPayload;
 };

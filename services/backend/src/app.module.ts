@@ -24,6 +24,8 @@ import { FraudModule } from "./modules/fraud/fraud.module";
 import { HealthModule } from "./health/health.module";
 import { FavoritesModule } from "./modules/favorites/favorites.module";
 import { BlocksModule } from "./modules/blocks/blocks.module";
+import { LiveModule } from "./modules/live/live.module";
+import { VipModule } from "./modules/vip/vip.module";
 
 @Module({
   imports: [
@@ -51,6 +53,8 @@ import { BlocksModule } from "./modules/blocks/blocks.module";
     HealthModule,
     FavoritesModule,
     BlocksModule,
+    LiveModule,
+    VipModule,
   ],
 })
 export class AppModule {}

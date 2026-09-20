@@ -24,14 +24,30 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.widget.Toast
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import com.vibely.app.ui.viewmodel.UiState
+import com.vibely.app.ui.viewmodel.WalletViewModel
 
 private data class ProfileMenuItem(val label: String, val route: String? = null)
 
 @Composable
-fun ProfileScreen(onOpenTasks: () -> Unit = {}, onOpenInvitation: () -> Unit = {}) {
+fun ProfileScreen(
+    walletViewModel: WalletViewModel,
+    onOpenTasks: () -> Unit = {},
+    onOpenInvitation: () -> Unit = {},
+    onOpenWallet: () -> Unit = {},
+    onOpenSettings: () -> Unit = {},
+    onOpenVip: () -> Unit = {}
+) {
+    val context = LocalContext.current
+    val balanceState by walletViewModel.balance.collectAsState()
+    val balanceText = (balanceState as? UiState.Success)?.data?.toString() ?: "…"
     val menuItems = listOf(
         ProfileMenuItem("Task", "tasks"),
         ProfileMenuItem("My level"),
@@ -39,7 +55,7 @@ fun ProfileScreen(onOpenTasks: () -> Unit = {}, onOpenInvitation: () -> Unit = {
         ProfileMenuItem("Family"),
         ProfileMenuItem("My invitation", "invitation"),
         ProfileMenuItem("Mall"),
-        ProfileMenuItem("My profile"),
+        ProfileMenuItem("My profile", "settings"),
         ProfileMenuItem("My chat price")
     )
     Column(modifier = Modifier.fillMaxSize().background(Color.White).padding(20.dp)) {
@@ -60,10 +76,10 @@ fun ProfileScreen(onOpenTasks: () -> Unit = {}, onOpenInvitation: () -> Unit = {
             ProfileStat("61", "Fans", Modifier.weight(1f))
         }
         Row(modifier = Modifier.fillMaxWidth().padding(top = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            ProfileActionCard("My Wallet", "5385", Color(0xFFFF2E7E), Modifier.weight(1f))
+            ProfileActionCard("My Wallet", balanceText, Color(0xFFFF2E7E), Modifier.weight(1f).clickable { onOpenWallet() })
             ProfileActionCard("My Income", "6", Color(0xFF3E6BF2), Modifier.weight(1f))
         }
-        Box(modifier = Modifier.fillMaxWidth().padding(top = 14.dp).clip(RoundedCornerShape(16.dp)).background(Color(0xFF141215)).padding(18.dp)) {
+        Box(modifier = Modifier.fillMaxWidth().padding(top = 14.dp).clip(RoundedCornerShape(16.dp)).background(Color(0xFF141215)).clickable { onOpenVip() }.padding(18.dp)) {
             Column { Text("Become VIP", color = Color.White, fontWeight = FontWeight.Black, fontSize = 18.sp); Text("VIP center", color = Color(0xFFB7B2BC), fontSize = 13.sp) }
         }
         LazyVerticalGrid(columns = GridCells.Fixed(4), modifier = Modifier.padding(top = 20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -74,6 +90,8 @@ fun ProfileScreen(onOpenTasks: () -> Unit = {}, onOpenInvitation: () -> Unit = {
                         when (item.route) {
                             "tasks" -> onOpenTasks()
                             "invitation" -> onOpenInvitation()
+                            "settings" -> onOpenSettings()
+                            else -> Toast.makeText(context, "${item.label} is coming soon", Toast.LENGTH_SHORT).show()
                         }
                     }
                 ) {
