@@ -225,9 +225,9 @@ export class MatchingService {
     for (const candidate of candidates) {
       if (blockedIds.has(candidate.id) || blockedByIds.has(candidate.id)) continue;
       if (candidate.profile?.onlineStatus === "IN_CALL" || candidate.profile?.onlineStatus === "BUSY") continue;
-      // A request only rings the opposite gender by default, unless either
-      // side has set an explicit preference that says otherwise.
-      if (targetGender && !user.preferences?.preferredGender && !candidate.preferences?.preferredGender && candidate.gender !== targetGender) continue;
+      // Random match always rings the opposite gender — this is not
+      // configurable via preferredGender, unlike age/country/language.
+      if (targetGender && candidate.gender !== targetGender) continue;
       if (!this.isCompatible(user, candidate)) continue;
       result.push(candidate.id);
     }
@@ -244,13 +244,11 @@ export class MatchingService {
     const ageA = ageFromDateOfBirth(a.dateOfBirth);
     const ageB = ageFromDateOfBirth(b.dateOfBirth);
 
-    if (b.preferences?.preferredGender && b.preferences.preferredGender !== "PREFER_NOT_TO_SAY" && b.preferences.preferredGender !== a.gender) return false;
     if (b.preferences?.preferredAgeMin && ageA < b.preferences.preferredAgeMin) return false;
     if (b.preferences?.preferredAgeMax && ageA > b.preferences.preferredAgeMax) return false;
     if (b.preferences?.preferredCountries?.length && !b.preferences.preferredCountries.includes(a.country)) return false;
     if (b.preferences?.preferredLanguages?.length && !b.preferences.preferredLanguages.includes(a.language)) return false;
 
-    if (a.preferences?.preferredGender && a.preferences.preferredGender !== "PREFER_NOT_TO_SAY" && a.preferences.preferredGender !== b.gender) return false;
     if (a.preferences?.preferredAgeMin && ageB < a.preferences.preferredAgeMin) return false;
     if (a.preferences?.preferredAgeMax && ageB > a.preferences.preferredAgeMax) return false;
     if (a.preferences?.preferredCountries?.length && !a.preferences.preferredCountries.includes(b.country)) return false;
