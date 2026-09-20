@@ -2,6 +2,24 @@ import { Injectable, NotFoundException, ConflictException } from "@nestjs/common
 import { PrismaService } from "../../database/prisma.service";
 import { createLogger } from "@vibely/shared";
 import { UpdatePreferencesDto, UpdateProfileDto, UpdateAvatarDto, UpdateMeDto } from "./dto";
+import { Gender, Prisma } from "@prisma/client";
+
+export interface SearchUsersQuery {
+  q?: string;
+  gender?: string;
+  country?: string;
+  onlineOnly?: boolean;
+  ageMin?: number;
+  ageMax?: number;
+  page?: number;
+  limit?: number;
+}
+
+function yearsAgo(years: number): Date {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() - years);
+  return d;
+}
 
 const logger = createLogger("UsersService");
 
@@ -62,6 +80,56 @@ export class UsersService {
       this.prisma.user.count(),
     ]);
     logger.debug("Listed users", { page, limit, total });
+    return { items, total, page, limit };
+  }
+
+  async search(currentUserId: string, filters: SearchUsersQuery) {
+    const page = filters.page ?? 1;
+    const limit = Math.min(filters.limit ?? 20, 50);
+
+    const blocks = await this.prisma.block.findMany({
+      where: { OR: [{ blockerId: currentUserId }, { blockedId: currentUserId }] },
+      select: { blockerId: true, blockedId: true },
+    });
+    const excludedIds = new Set<string>([currentUserId]);
+    for (const b of blocks) {
+      excludedIds.add(b.blockerId === currentUserId ? b.blockedId : b.blockerId);
+    }
+
+    const dobFilter: Prisma.DateTimeFilter = {};
+    if (filters.ageMin !== undefined) dobFilter.lte = yearsAgo(filters.ageMin);
+    if (filters.ageMax !== undefined) dobFilter.gte = yearsAgo(filters.ageMax);
+
+    const where: Prisma.UserWhereInput = {
+      id: { notIn: Array.from(excludedIds) },
+      status: "ACTIVE",
+      ...(filters.q ? { username: { contains: filters.q, mode: "insensitive" } } : {}),
+      ...(filters.gender ? { gender: filters.gender as Gender } : {}),
+      ...(filters.country ? { country: filters.country } : {}),
+      ...(Object.keys(dobFilter).length ? { dateOfBirth: dobFilter } : {}),
+      ...(filters.onlineOnly ? { profile: { onlineStatus: "ONLINE" } } : {}),
+    };
+
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.user.findMany({
+        where,
+        skip: (page - 1) * limit,
+        take: limit,
+        // Enum sorts lexicographically; "desc" happens to put ONLINE ahead of
+        // OFFLINE/IN_CALL/BUSY, which is the ordering we actually want here.
+        orderBy: [{ profile: { onlineStatus: "desc" } }, { createdAt: "desc" }],
+        select: {
+          id: true,
+          username: true,
+          gender: true,
+          country: true,
+          avatarUrl: true,
+          profile: { select: { bio: true, onlineStatus: true } },
+        },
+      }),
+      this.prisma.user.count({ where }),
+    ]);
+
     return { items, total, page, limit };
   }
 

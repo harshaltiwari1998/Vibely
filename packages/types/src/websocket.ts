@@ -82,6 +82,14 @@ export enum RealtimeEvent {
   LiveChatMessage = "live_chat_message",
   LiveGiftSent = "live_gift_sent",
   LiveEnded = "live_ended",
+
+  // Party rooms
+  PartyMemberJoined = "party_member_joined",
+  PartyMemberLeft = "party_member_left",
+  PartySeatUpdated = "party_seat_updated",
+  PartyChatMessage = "party_chat_message",
+  PartyEnded = "party_ended",
+  PartySeatToken = "party_seat_token",
 }
 
 export interface PresencePayload {
@@ -296,6 +304,49 @@ export interface LiveEndedPayload {
   roomId: string;
 }
 
+export interface PartySeatInfo {
+  seatIndex: number;
+  userId: string;
+  username: string;
+  avatarUrl?: string | null;
+  muted: boolean;
+}
+
+export interface PartyMemberJoinedPayload {
+  roomId: string;
+  userId: string;
+  username: string;
+  memberCount: number;
+}
+
+export interface PartyMemberLeftPayload {
+  roomId: string;
+  userId: string;
+  memberCount: number;
+}
+
+export interface PartySeatUpdatedPayload {
+  roomId: string;
+  seats: PartySeatInfo[];
+}
+
+export interface PartyChatMessagePayload {
+  roomId: string;
+  userId: string;
+  username: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface PartyEndedPayload {
+  roomId: string;
+}
+
+export interface PartySeatTokenPayload {
+  roomId: string;
+  token: string;
+}
+
 export type RealtimePayloadMap = {
   [RealtimeEvent.UserConnected]: PresencePayload;
   [RealtimeEvent.UserDisconnected]: PresencePayload;
@@ -338,4 +389,10 @@ export type RealtimePayloadMap = {
   [RealtimeEvent.LiveChatMessage]: LiveChatMessagePayload;
   [RealtimeEvent.LiveGiftSent]: LiveGiftSentPayload;
   [RealtimeEvent.LiveEnded]: LiveEndedPayload;
+  [RealtimeEvent.PartyMemberJoined]: PartyMemberJoinedPayload;
+  [RealtimeEvent.PartyMemberLeft]: PartyMemberLeftPayload;
+  [RealtimeEvent.PartySeatUpdated]: PartySeatUpdatedPayload;
+  [RealtimeEvent.PartyChatMessage]: PartyChatMessagePayload;
+  [RealtimeEvent.PartyEnded]: PartyEndedPayload;
+  [RealtimeEvent.PartySeatToken]: PartySeatTokenPayload;
 };

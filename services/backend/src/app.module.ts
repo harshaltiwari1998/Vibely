@@ -34,6 +34,9 @@ import { BadgesModule } from "./modules/badges/badges.module";
 import { MallModule } from "./modules/mall/mall.module";
 import { FamiliesModule } from "./modules/families/families.module";
 import { ChatPriceModule } from "./modules/chat-price/chat-price.module";
+import { PartyModule } from "./modules/party/party.module";
+import { WithdrawalsModule } from "./modules/withdrawals/withdrawals.module";
+import { LeaderboardModule } from "./modules/leaderboard/leaderboard.module";
 
 @Module({
   imports: [
@@ -70,6 +73,9 @@ import { ChatPriceModule } from "./modules/chat-price/chat-price.module";
     MallModule,
     FamiliesModule,
     ChatPriceModule,
+    PartyModule,
+    WithdrawalsModule,
+    LeaderboardModule,
   ],
 })
 export class AppModule {}

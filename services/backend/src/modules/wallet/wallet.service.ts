@@ -44,6 +44,21 @@ export class WalletService {
     return { beans: updated.beans };
   }
 
+  async deductBeans(userId: string, amount: number) {
+    if (amount <= 0) {
+      throw new BadRequestException("Amount must be positive");
+    }
+    const wallet = await this.ensureWallet(userId);
+    if (wallet.beans < amount) {
+      throw new BadRequestException("Insufficient beans");
+    }
+    const updated = await this.prisma.wallet.update({
+      where: { userId },
+      data: { beans: { decrement: amount } },
+    });
+    return { beans: updated.beans };
+  }
+
   async getTransactions(userId: string) {
     const transactions = await this.prisma.coinTransaction.findMany({
       where: { userId },

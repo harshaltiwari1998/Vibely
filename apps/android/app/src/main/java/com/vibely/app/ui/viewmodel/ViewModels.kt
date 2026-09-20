@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vibely.app.data.model.CallLog
 import com.vibely.app.data.model.ChatMessage
-import com.vibely.app.data.model.User
 import com.vibely.app.data.realtime.SocketManager
 import com.vibely.app.data.remote.ApiClient
 import com.vibely.app.data.remote.ApiService
@@ -224,26 +223,6 @@ class VipViewModel(private val api: ApiService) : ViewModel() {
 
     fun consumeMessage() {
         _message.value = null
-    }
-}
-
-class DiscoverViewModel(private val api: ApiService) : ViewModel() {
-    private val _users = MutableStateFlow<UiState<List<User>>>(UiState.Loading)
-    val users: StateFlow<UiState<List<User>>> = _users.asStateFlow()
-
-    init {
-        viewModelScope.launch {
-            try {
-                val resp = api.listUsers()
-                if (resp.success && resp.data != null) {
-                    val filtered = resp.data.filter { it.gender == "FEMALE" }
-                        .map { User(it.id, it.username, it.avatarUrl, true) }
-                    _users.value = UiState.Success(filtered)
-                }
-            } catch (e: Exception) {
-                _users.value = UiState.Error(e.message ?: "Network error")
-            }
-        }
     }
 }
 

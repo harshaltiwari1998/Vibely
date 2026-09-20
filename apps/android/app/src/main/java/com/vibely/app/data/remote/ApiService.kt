@@ -19,6 +19,7 @@ import com.vibely.app.data.remote.dto.FamilyLeaderboardEntry
 import com.vibely.app.data.remote.dto.FamilySummaryResponse
 import com.vibely.app.data.remote.dto.GiftResponse
 import com.vibely.app.data.remote.dto.LeaderboardEntry
+import com.vibely.app.data.remote.dto.LeaderboardEntryResponse
 import com.vibely.app.data.remote.dto.LevelStatusResponse
 import com.vibely.app.data.remote.dto.LiveRoomResponse
 import com.vibely.app.data.remote.dto.LiveSessionResponse
@@ -32,8 +33,13 @@ import com.vibely.app.data.remote.dto.MatchResponse
 import com.vibely.app.data.remote.dto.MatchStartRequest
 import com.vibely.app.data.remote.dto.BadgesResponse
 import com.vibely.app.data.remote.dto.NotificationsListResponse
+import com.vibely.app.data.remote.dto.PartyRoomResponse
+import com.vibely.app.data.remote.dto.PartySeatActionResponse
+import com.vibely.app.data.remote.dto.PartySessionResponse
 import com.vibely.app.data.remote.dto.ReferralInfoResponse
 import com.vibely.app.data.remote.dto.RegisterRequest
+import com.vibely.app.data.remote.dto.RequestWithdrawalBody
+import com.vibely.app.data.remote.dto.SearchResultsResponse
 import com.vibely.app.data.remote.dto.SendGiftRequest
 import com.vibely.app.data.remote.dto.SendGiftResponse
 import com.vibely.app.data.remote.dto.SendMessageRequest
@@ -43,6 +49,7 @@ import com.vibely.app.data.remote.dto.SimpleSuccessResponse
 import com.vibely.app.data.remote.dto.StartChatRequest
 import com.vibely.app.data.remote.dto.StartChatResponse
 import com.vibely.app.data.remote.dto.StartLiveRequest
+import com.vibely.app.data.remote.dto.StartPartyRequest
 import com.vibely.app.data.remote.dto.TaskClaimRequest
 import com.vibely.app.data.remote.dto.TaskClaimResponse
 import com.vibely.app.data.remote.dto.TaskResponse
@@ -53,6 +60,8 @@ import com.vibely.app.data.remote.dto.VipPurchaseRequest
 import com.vibely.app.data.remote.dto.VipStatusResponse
 import com.vibely.app.data.remote.dto.VipTierResponse
 import com.vibely.app.data.remote.dto.WalletResponse
+import com.vibely.app.data.remote.dto.WithdrawalListResponse
+import com.vibely.app.data.remote.dto.WithdrawalResponse
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -75,6 +84,16 @@ interface ApiService {
 
     @GET("users")
     suspend fun listUsers(): ApiEnvelope<List<UserResponse>>
+
+    @GET("users/search")
+    suspend fun searchUsers(
+        @Query("q") q: String? = null,
+        @Query("gender") gender: String? = null,
+        @Query("country") country: String? = null,
+        @Query("onlineOnly") onlineOnly: Boolean? = null,
+        @Query("ageMin") ageMin: Int? = null,
+        @Query("ageMax") ageMax: Int? = null,
+    ): ApiEnvelope<SearchResultsResponse>
 
     @POST("matching/start")
     suspend fun startMatch(@Body dto: MatchStartRequest): ApiEnvelope<MatchResponse>
@@ -135,6 +154,36 @@ interface ApiService {
 
     @GET("live/{id}/join")
     suspend fun joinLive(@Path("id") roomId: String): ApiEnvelope<LiveSessionResponse>
+
+    @POST("party/start")
+    suspend fun startParty(@Body dto: StartPartyRequest): ApiEnvelope<PartySessionResponse>
+
+    @POST("party/{id}/end")
+    suspend fun endParty(@Path("id") roomId: String): ApiEnvelope<Any>
+
+    @GET("party")
+    suspend fun listPartyRooms(): ApiEnvelope<List<PartyRoomResponse>>
+
+    @GET("party/{id}/join")
+    suspend fun joinParty(@Path("id") roomId: String): ApiEnvelope<PartySessionResponse>
+
+    @POST("party/{id}/leave")
+    suspend fun leaveParty(@Path("id") roomId: String): ApiEnvelope<Any>
+
+    @POST("party/{id}/seats/{seatIndex}/take")
+    suspend fun takePartySeat(@Path("id") roomId: String, @Path("seatIndex") seatIndex: Int): ApiEnvelope<PartySeatActionResponse>
+
+    @POST("party/{id}/seats/leave")
+    suspend fun leavePartySeat(@Path("id") roomId: String): ApiEnvelope<PartySeatActionResponse>
+
+    @POST("withdrawals")
+    suspend fun requestWithdrawal(@Body dto: RequestWithdrawalBody): ApiEnvelope<WithdrawalResponse>
+
+    @GET("withdrawals/mine")
+    suspend fun myWithdrawals(): ApiEnvelope<WithdrawalListResponse>
+
+    @GET("leaderboard")
+    suspend fun getLeaderboard(@Query("type") type: String, @Query("period") period: String): ApiEnvelope<List<LeaderboardEntryResponse>>
 
     @GET("gifts")
     suspend fun listGifts(): ApiEnvelope<List<GiftResponse>>

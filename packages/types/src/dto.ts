@@ -80,6 +80,18 @@ export interface SendLiveGiftDto {
   giftId: string;
 }
 
+export interface StartPartyDto {
+  title: string;
+  country?: string;
+  coverUrl?: string;
+  seatCount?: number;
+}
+
+export interface RequestWithdrawalDto {
+  beansAmount: number;
+  upiId: string;
+}
+
 export interface CreateReportDto {
   targetUserId: string;
   targetType: "USER" | "MESSAGE" | "PROFILE" | "CALL" | "GIFT" | "OTHER";

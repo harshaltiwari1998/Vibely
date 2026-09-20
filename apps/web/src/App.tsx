@@ -23,6 +23,7 @@ import { AdminReportsPage } from "./pages/admin/AdminReportsPage";
 import { AdminCallsPage } from "./pages/admin/AdminCallsPage";
 import { AdminMessagesPage } from "./pages/admin/AdminMessagesPage";
 import { AdminTransactionsPage } from "./pages/admin/AdminTransactionsPage";
+import { AdminWithdrawalsPage } from "./pages/admin/AdminWithdrawalsPage";
 import { AdminGiftsPage } from "./pages/admin/AdminGiftsPage";
 import { AdminModerationPage } from "./pages/admin/AdminModerationPage";
 import { AdminAnalyticsPage } from "./pages/admin/AdminAnalyticsPage";
@@ -87,6 +88,7 @@ export function App() {
         <Route path="/admin/calls" element={<AdminProtected element={<AdminCallsPage />} />} />
         <Route path="/admin/messages" element={<AdminProtected element={<AdminMessagesPage />} />} />
         <Route path="/admin/transactions" element={<AdminProtected element={<AdminTransactionsPage />} />} />
+        <Route path="/admin/withdrawals" element={<AdminProtected element={<AdminWithdrawalsPage />} />} />
         <Route path="/admin/gifts" element={<AdminProtected element={<AdminGiftsPage />} />} />
         <Route path="/admin/moderation" element={<AdminProtected element={<AdminModerationPage />} />} />
         <Route path="/admin/analytics" element={<AdminProtected element={<AdminAnalyticsPage />} />} />

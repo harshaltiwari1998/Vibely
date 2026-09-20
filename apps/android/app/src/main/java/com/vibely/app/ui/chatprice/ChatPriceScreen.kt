@@ -39,7 +39,7 @@ private fun maxPriceForLevel(level: Int): Int {
 }
 
 @Composable
-fun ChatPriceScreen(viewModel: ChatPriceViewModel, onBack: () -> Unit = {}) {
+fun ChatPriceScreen(viewModel: ChatPriceViewModel, onBack: () -> Unit = {}, onOpenWithdraw: () -> Unit = {}) {
     val context = LocalContext.current
     val state by viewModel.status.collectAsState()
     val isSaving by viewModel.isSaving.collectAsState()
@@ -85,6 +85,13 @@ fun ChatPriceScreen(viewModel: ChatPriceViewModel, onBack: () -> Unit = {}) {
                         StatCard("Level", "Lv ${status.level}", Modifier.weight(1f))
                         StatCard("My beans", "🫘 ${status.beans}", Modifier.weight(1f))
                     }
+                    Text(
+                        "Withdraw beans →",
+                        color = Color(0xFF7C3AED),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        modifier = Modifier.fillMaxWidth().padding(top = 12.dp).clickable { onOpenWithdraw() }
+                    )
 
                     Text("The highest call price", color = Color(0xFF111827), fontWeight = FontWeight.Bold, fontSize = 16.sp, modifier = Modifier.fillMaxWidth().padding(top = 28.dp))
                     Column(modifier = Modifier.fillMaxWidth().padding(top = 12.dp).clip(RoundedCornerShape(14.dp)).background(Color(0xFFFFF8DD))) {

@@ -29,6 +29,11 @@ sealed class Screen(val route: String) {
     data object LiveRoom : Screen("live/{roomId}") {
         fun createRoute(roomId: String) = "live/$roomId"
     }
+    data object PartyRoom : Screen("party/{roomId}") {
+        fun createRoute(roomId: String) = "party/$roomId"
+    }
+    data object Withdraw : Screen("withdraw")
+    data object Leaderboard : Screen("leaderboard")
     data object Chat : Screen("chat/{userId}") {
         fun createRoute(userId: String) = "chat/$userId"
     }

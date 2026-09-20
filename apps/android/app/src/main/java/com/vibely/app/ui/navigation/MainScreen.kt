@@ -59,6 +59,7 @@ import com.vibely.app.ui.family.FamilyScreen
 import com.vibely.app.ui.gifts.GiftsScreen
 import com.vibely.app.ui.history.HistoryScreen
 import com.vibely.app.ui.invitation.InvitationScreen
+import com.vibely.app.ui.leaderboard.LeaderboardScreen
 import com.vibely.app.ui.level.LevelScreen
 import com.vibely.app.ui.live.GoLiveScreen
 import com.vibely.app.ui.live.LiveFeedScreen
@@ -67,6 +68,7 @@ import com.vibely.app.ui.mall.MallScreen
 import com.vibely.app.ui.match.MatchScreen
 import com.vibely.app.ui.messages.MessageListScreen
 import com.vibely.app.ui.notifications.NotificationsScreen
+import com.vibely.app.ui.party.PartyRoomScreen
 import com.vibely.app.ui.profile.ProfileScreen
 import com.vibely.app.ui.search.SearchScreen
 import com.vibely.app.ui.settings.BlocklistScreen
@@ -76,8 +78,9 @@ import com.vibely.app.ui.viewmodel.BadgesViewModel
 import com.vibely.app.ui.viewmodel.CallViewModel
 import com.vibely.app.ui.viewmodel.ChatPriceViewModel
 import com.vibely.app.ui.viewmodel.ChatViewModel
-import com.vibely.app.ui.viewmodel.DiscoverViewModel
+import com.vibely.app.ui.viewmodel.SearchViewModel
 import com.vibely.app.ui.viewmodel.FamilyViewModel
+import com.vibely.app.ui.viewmodel.LeaderboardViewModel
 import com.vibely.app.ui.viewmodel.LevelViewModel
 import com.vibely.app.ui.viewmodel.LiveFeedViewModel
 import com.vibely.app.ui.viewmodel.MallViewModel
@@ -85,12 +88,15 @@ import com.vibely.app.ui.viewmodel.MatchViewModel
 import com.vibely.app.ui.viewmodel.MessagesViewModel
 import com.vibely.app.ui.viewmodel.BlocklistViewModel
 import com.vibely.app.ui.viewmodel.NotificationsViewModel
+import com.vibely.app.ui.viewmodel.PartyListViewModel
 import com.vibely.app.ui.viewmodel.ReferralViewModel
 import com.vibely.app.ui.viewmodel.TaskViewModel
 import com.vibely.app.ui.viewmodel.VipViewModel
 import com.vibely.app.ui.viewmodel.WalletViewModel
+import com.vibely.app.ui.viewmodel.WithdrawalViewModel
 import com.vibely.app.ui.vip.VipScreen
 import com.vibely.app.ui.wallet.WalletScreen
+import com.vibely.app.ui.withdraw.WithdrawScreen
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 
@@ -114,6 +120,7 @@ fun MainScreen(api: ApiService, token: String?, userId: String?, onLogout: () ->
     val messagesViewModel = remember { MessagesViewModel(api) }
     val notificationsViewModel = remember { NotificationsViewModel(api) }
     val callViewModel = remember { CallViewModel(api) }
+    val partyListViewModel = remember { PartyListViewModel(api) }
 
     // Mounted once for the whole logged-in session (unlike the per-tab
     // screens below), so an incoming random-match request can pop up no
@@ -251,8 +258,10 @@ fun MainScreen(api: ApiService, token: String?, userId: String?, onLogout: () ->
                     val liveFeedViewModel = remember { LiveFeedViewModel(api) }
                     LiveFeedScreen(
                         viewModel = liveFeedViewModel,
+                        partyListViewModel = partyListViewModel,
                         onOpenRoom = { roomId -> navController.navigate("live/$roomId") },
-                        onGoLive = { navController.navigate(Screen.GoLive.route) }
+                        onGoLive = { navController.navigate(Screen.GoLive.route) },
+                        onOpenPartyRoom = { roomId -> navController.navigate(Screen.PartyRoom.createRoute(roomId)) }
                     )
                 }
                 composable(Screen.GoLive.route) {
@@ -262,8 +271,12 @@ fun MainScreen(api: ApiService, token: String?, userId: String?, onLogout: () ->
                     val roomId = backStackEntry.arguments?.getString("roomId") ?: ""
                     LiveViewerScreen(api = api, roomId = roomId, onEnded = { navController.popBackStack() })
                 }
+                composable(Screen.PartyRoom.route, arguments = listOf(navArgument("roomId") { type = NavType.StringType })) { backStackEntry ->
+                    val roomId = backStackEntry.arguments?.getString("roomId") ?: ""
+                    PartyRoomScreen(api = api, roomId = roomId, myUserId = userId, onEnded = { navController.popBackStack() })
+                }
                 composable(Screen.Search.route) {
-                    val searchViewModel = remember { DiscoverViewModel(api) }
+                    val searchViewModel = remember { SearchViewModel(api) }
                     SearchScreen(viewModel = searchViewModel)
                 }
                 composable(Screen.Messages.route) {
@@ -281,8 +294,17 @@ fun MainScreen(api: ApiService, token: String?, userId: String?, onLogout: () ->
                         onOpenBadges = { navController.navigate(Screen.Badges.route) },
                         onOpenFamily = { navController.navigate(Screen.Family.route) },
                         onOpenMall = { navController.navigate(Screen.Mall.route) },
-                        onOpenChatPrice = { navController.navigate(Screen.ChatPrice.route) }
+                        onOpenChatPrice = { navController.navigate(Screen.ChatPrice.route) },
+                        onOpenLeaderboard = { navController.navigate(Screen.Leaderboard.route) }
                     )
+                }
+                composable(Screen.Leaderboard.route) {
+                    val leaderboardViewModel = remember { LeaderboardViewModel(api) }
+                    LeaderboardScreen(viewModel = leaderboardViewModel, onBack = { navController.popBackStack() })
+                }
+                composable(Screen.Withdraw.route) {
+                    val withdrawalViewModel = remember { WithdrawalViewModel(api) }
+                    WithdrawScreen(api = api, viewModel = withdrawalViewModel, onBack = { navController.popBackStack() })
                 }
                 composable(Screen.Tasks.route) {
                     val taskViewModel = remember { TaskViewModel(api) }
@@ -310,7 +332,11 @@ fun MainScreen(api: ApiService, token: String?, userId: String?, onLogout: () ->
                 }
                 composable(Screen.ChatPrice.route) {
                     val chatPriceViewModel = remember { ChatPriceViewModel(api) }
-                    ChatPriceScreen(viewModel = chatPriceViewModel, onBack = { navController.popBackStack() })
+                    ChatPriceScreen(
+                        viewModel = chatPriceViewModel,
+                        onBack = { navController.popBackStack() },
+                        onOpenWithdraw = { navController.navigate(Screen.Withdraw.route) }
+                    )
                 }
                 composable(Screen.Wallet.route) { WalletScreen(viewModel = walletViewModel) }
                 composable(Screen.Vip.route) {

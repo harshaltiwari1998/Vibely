@@ -4,7 +4,6 @@ import {
   Delete,
   Get,
   Param,
-  ParseIntPipe,
   Post,
   Query,
   UseGuards,
@@ -25,11 +24,35 @@ export class UsersController {
   }
 
   @Get()
-  list(
-    @Query("page", new ParseIntPipe({ optional: true })) page?: number,
-    @Query("limit", new ParseIntPipe({ optional: true })) limit?: number,
+  list(@Query("page") page?: string, @Query("limit") limit?: string) {
+    return this.users.list({
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+    });
+  }
+
+  @Get("search")
+  search(
+    @CurrentUser() user: { id: string },
+    @Query("q") q?: string,
+    @Query("gender") gender?: string,
+    @Query("country") country?: string,
+    @Query("onlineOnly") onlineOnly?: string,
+    @Query("ageMin") ageMin?: string,
+    @Query("ageMax") ageMax?: string,
+    @Query("page") page?: string,
+    @Query("limit") limit?: string,
   ) {
-    return this.users.list({ page, limit });
+    return this.users.search(user.id, {
+      q,
+      gender,
+      country,
+      onlineOnly: onlineOnly === "true",
+      ageMin: ageMin ? parseInt(ageMin, 10) : undefined,
+      ageMax: ageMax ? parseInt(ageMax, 10) : undefined,
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+    });
   }
 
   @Get(":id")

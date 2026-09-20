@@ -109,6 +109,9 @@ model User {
   chatParticipantEntries ChatParticipant[]
   liveRooms      LiveRoom[]       @relation("LiveHost")
   liveViewerEntries LiveViewer[]
+  partyRoomsHosted PartyRoom[]    @relation("PartyHost")
+  partyMemberEntries PartyMember[]
+  withdrawalRequests WithdrawalRequest[]
 
   @@index([country])
   @@index([status])
@@ -365,6 +368,51 @@ model LiveViewer {
   @@index([userId])
 }
 
+// ---------------------------------------------------------------------
+// Party rooms (multi-user voice chat with seats)
+// ---------------------------------------------------------------------
+
+enum PartyRoomStatus {
+  ACTIVE
+  ENDED
+}
+
+model PartyRoom {
+  id          String          @id @default(uuid())
+  hostId      String
+  host        User            @relation("PartyHost", fields: [hostId], references: [id])
+  title       String
+  status      PartyRoomStatus @default(ACTIVE)
+  country     String?
+  coverUrl    String?
+  seatCount   Int             @default(8)
+  peakMembers Int             @default(0)
+  startedAt   DateTime        @default(now())
+  endedAt     DateTime?
+
+  members     PartyMember[]
+
+  @@index([status])
+  @@index([hostId])
+  @@index([startedAt])
+}
+
+model PartyMember {
+  id        String    @id @default(uuid())
+  roomId    String
+  room      PartyRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  seatIndex Int?
+  muted     Boolean   @default(false)
+  joinedAt  DateTime  @default(now())
+  leftAt    DateTime?
+
+  @@unique([roomId, seatIndex])
+  @@index([roomId])
+  @@index([userId])
+}
+
 model Wallet {
   id        String   @id @default(uuid())
   userId    String   @unique
@@ -459,6 +507,31 @@ model Payment {
   @@index([idempotencyKey])
   @@index([status])
   @@index([createdAt])
+}
+
+enum WithdrawalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  PAID
+}
+
+model WithdrawalRequest {
+  id          String           @id @default(uuid())
+  userId      String
+  user        User             @relation(fields: [userId], references: [id])
+  beansAmount Int
+  payoutInr   Int
+  upiId       String
+  status      WithdrawalStatus @default(PENDING)
+  reviewedById String?
+  reviewNote  String?
+  requestedAt DateTime         @default(now())
+  reviewedAt  DateTime?
+
+  @@index([userId])
+  @@index([status])
+  @@index([requestedAt])
 }
 
 model Family {

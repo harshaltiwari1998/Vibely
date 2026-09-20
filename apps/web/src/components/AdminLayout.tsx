@@ -10,6 +10,7 @@ const links = [
   { to: "/admin/calls", label: "Calls", icon: "☎" },
   { to: "/admin/messages", label: "Messages", icon: "▰" },
   { to: "/admin/transactions", label: "Transactions", icon: "◆" },
+  { to: "/admin/withdrawals", label: "Withdrawals", icon: "⛁" },
   { to: "/admin/gifts", label: "Gifts", icon: "❖" },
   { to: "/admin/analytics", label: "Analytics", icon: "▲" },
   { to: "/admin/settings", label: "Settings", icon: "⚙" },

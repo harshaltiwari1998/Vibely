@@ -36,8 +36,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import android.widget.Toast
 import com.vibely.app.data.remote.dto.LiveRoomResponse
-import com.vibely.app.ui.party.PartyRoomGrid
+import com.vibely.app.ui.party.PartyRoomsContent
 import com.vibely.app.ui.viewmodel.LiveFeedViewModel
+import com.vibely.app.ui.viewmodel.PartyListViewModel
 import com.vibely.app.ui.viewmodel.UiState
 
 private enum class LiveSection { LIVE, PARTY, FAMILY }
@@ -45,8 +46,10 @@ private enum class LiveSection { LIVE, PARTY, FAMILY }
 @Composable
 fun LiveFeedScreen(
     viewModel: LiveFeedViewModel,
+    partyListViewModel: PartyListViewModel,
     onOpenRoom: (String) -> Unit,
     onGoLive: () -> Unit,
+    onOpenPartyRoom: (String) -> Unit,
 ) {
     var section by remember { mutableStateOf(LiveSection.LIVE) }
     var selectedFilter by remember { mutableStateOf(0) }
@@ -63,8 +66,10 @@ fun LiveFeedScreen(
             Text("⌕", color = Color(0xFF3E3540), fontSize = 24.sp, modifier = Modifier.clickable { Toast.makeText(context, "Use the Search tab to find people", Toast.LENGTH_SHORT).show() })
         }
 
-        if (section == LiveSection.PARTY || section == LiveSection.FAMILY) {
-            PartyRoomGrid(modifier = Modifier.padding(top = 18.dp))
+        if (section == LiveSection.PARTY) {
+            PartyRoomsContent(viewModel = partyListViewModel, onOpenRoom = onOpenPartyRoom, modifier = Modifier.padding(top = 18.dp))
+        } else if (section == LiveSection.FAMILY) {
+            Text("Open Family from your Profile tab.", color = Color(0xFF6B7280), modifier = Modifier.padding(top = 24.dp))
         } else {
             Row(modifier = Modifier.padding(top = 16.dp).fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf("India", "South Asian", "East Asian", "White", "Black").forEachIndexed { index, label ->
