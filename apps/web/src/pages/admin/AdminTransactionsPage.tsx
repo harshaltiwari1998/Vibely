@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Page } from "../../components/Page";
-import api from "../../lib/api";
+import api, { unwrap } from "../../lib/api";
 
 type Transaction = { id: string; type: string; amount: number; createdAt: string; user: { username: string } };
 
@@ -12,7 +12,7 @@ export function AdminTransactionsPage() {
     setLoading(true);
     try {
       const { data } = await api.get("/admin/transactions");
-      setTransactions(data.items ?? []);
+      setTransactions(unwrap<{ items: Transaction[] }>(data).items ?? []);
     } catch {
       setTransactions([]);
     } finally {

@@ -21,10 +21,9 @@ export class WalletController {
     return this.wallet.getTransactions(user.id);
   }
 
-  @Post("coins")
-  add(@CurrentUser() user: { id: string }, @Body() body: { amount: number }) {
-    return this.wallet.addCoins(user.id, body.amount, "PURCHASE");
-  }
+  // Diamonds are credited by the payments module once a real Razorpay charge
+  // is verified (see PaymentsService.verifyPayment/handleWebhook) — there is
+  // intentionally no client-facing "just add coins" endpoint anymore.
 
   @Post("admin/adjust")
   @UseGuards(RolesGuard)

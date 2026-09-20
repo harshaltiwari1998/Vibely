@@ -1,5 +1,6 @@
 package com.vibely.app.ui.wallet
 
+import android.app.Activity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -38,10 +39,15 @@ import android.widget.Toast
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.draw.alpha
+import com.razorpay.Checkout
 import com.vibely.app.ui.viewmodel.UiState
 import com.vibely.app.ui.viewmodel.WalletViewModel
+import org.json.JSONObject
 
-private data class DiamondPack(val diamonds: String, val strike: String, val price: String)
+private data class DiamondPack(val diamonds: String, val strike: String, val price: String) {
+    /** "INR 270.00" -> 270 (Razorpay order amounts are whole rupees here; paise conversion happens server-side). */
+    fun rupees(): Int = price.substringAfter(" ").toDoubleOrNull()?.toInt() ?: 0
+}
 
 @Composable
 fun WalletScreen(viewModel: WalletViewModel) {
@@ -51,12 +57,38 @@ fun WalletScreen(viewModel: WalletViewModel) {
     val balanceText = (balanceState as? UiState.Success)?.data?.toString() ?: "…"
     val isPurchasing by viewModel.isPurchasing.collectAsState()
     val rechargeMessage by viewModel.rechargeMessage.collectAsState()
+    val checkoutRequest by viewModel.checkoutRequest.collectAsState()
 
     LaunchedEffect(rechargeMessage) {
         rechargeMessage?.let {
             Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
             viewModel.consumeRechargeMessage()
         }
+    }
+
+    LaunchedEffect(checkoutRequest) {
+        val request = checkoutRequest ?: return@LaunchedEffect
+        val activity = context as? Activity
+        if (activity == null) {
+            Toast.makeText(context, "Can't open payment here", Toast.LENGTH_SHORT).show()
+            viewModel.consumeCheckoutRequest()
+            return@LaunchedEffect
+        }
+        val checkout = Checkout()
+        checkout.setKeyID(request.keyId)
+        val options = JSONObject().apply {
+            put("name", "Vibely")
+            put("description", "${request.diamonds} diamonds")
+            put("order_id", request.orderId)
+            put("currency", request.currency)
+            put("amount", request.amountPaise)
+        }
+        try {
+            checkout.open(activity, options)
+        } catch (e: Exception) {
+            Toast.makeText(context, "Could not open payment: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+        viewModel.consumeCheckoutRequest()
     }
     val singlePacks = listOf(
         DiamondPack("18480", "16800", "INR 270.00"),
@@ -107,7 +139,7 @@ fun WalletScreen(viewModel: WalletViewModel) {
                             .clip(RoundedCornerShape(14.dp))
                             .background(Color.White)
                             .clickable(enabled = !isPurchasing) {
-                                viewModel.mockRecharge(pack.diamonds.toIntOrNull() ?: 0)
+                                viewModel.purchase(pack.diamonds.toIntOrNull() ?: 0, pack.rupees())
                             }
                             .padding(12.dp),
                         horizontalAlignment = Alignment.CenterHorizontally

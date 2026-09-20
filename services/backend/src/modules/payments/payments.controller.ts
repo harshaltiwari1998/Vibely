@@ -1,11 +1,15 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
+  Headers,
   Param,
   Post,
+  Req,
   UseGuards,
 } from "@nestjs/common";
+import { Request } from "express";
 import { PaymentsService } from "./payments.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
@@ -27,8 +31,12 @@ export class PaymentsController {
 
   @Post(":paymentId/verify")
   @UseGuards(JwtAuthGuard)
-  verify(@CurrentUser() user: { id: string }, @Param("paymentId") paymentId: string) {
-    return this.payments.verifyPayment(paymentId);
+  verify(
+    @CurrentUser() user: { id: string },
+    @Param("paymentId") paymentId: string,
+    @Body() body: { providerPaymentId?: string; signature?: string },
+  ) {
+    return this.payments.verifyPayment(paymentId, body.providerPaymentId, body.signature);
   }
 
   @Post(":paymentId/refund")
@@ -53,9 +61,13 @@ export class PaymentsController {
     return this.payments.listTransactions(user.id);
   }
 
-  /** Public webhook endpoint for the payment provider (no auth). */
-  @Post("webhook")
-  webhook(@Body() body: { provider: string; payload: unknown; signature?: string }) {
-    return this.payments.handleWebhook(body.provider, body.payload, body.signature);
+  /** Public webhook endpoint Razorpay calls directly (no auth) — configure this URL in the Razorpay dashboard. */
+  @Post("webhook/razorpay")
+  webhook(@Req() req: Request, @Headers("x-razorpay-signature") signature: string) {
+    const rawBody = (req as Request & { rawBody?: Buffer }).rawBody;
+    if (!rawBody) {
+      throw new BadRequestException("Missing raw request body");
+    }
+    return this.payments.handleWebhook(rawBody, signature);
   }
 }

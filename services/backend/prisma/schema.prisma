@@ -32,6 +32,13 @@ enum UserStatus {
   BANNED
 }
 
+enum UserRole {
+  USER
+  MODERATOR
+  ADMIN
+  SUPER_ADMIN
+}
+
 enum OnlineStatus {
   ONLINE
   OFFLINE
@@ -53,6 +60,7 @@ model User {
   verificationToken String? @unique
   verificationExpires DateTime?
   status       UserStatus @default(PENDING)
+  role         UserRole   @default(USER)
   vipLevel     VipLevel   @default(NONE)
   vipExpiresAt DateTime?
   referralCode String?    @unique
@@ -60,6 +68,7 @@ model User {
   xp           Int        @default(0)
   featuredBadgeId String?
   familyId     String?
+  chatPricePerMinute Int  @default(0)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
@@ -361,6 +370,7 @@ model Wallet {
   userId    String   @unique
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   balance   Int      @default(0)
+  beans     Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -376,6 +386,7 @@ enum TransactionType {
   VIP_PURCHASE
   REFERRAL_BONUS
   MALL_PURCHASE
+  CALL_CHARGE
 }
 
 enum VipLevel {
@@ -430,6 +441,7 @@ model Payment {
   user            User          @relation(fields: [userId], references: [id])
   provider        String
   providerRef     String?
+  providerPaymentId String?
   packageId       String?
   package         CoinPackage?  @relation(fields: [packageId], references: [id])
   coins           Int

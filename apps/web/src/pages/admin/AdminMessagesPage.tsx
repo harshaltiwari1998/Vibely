@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Page } from "../../components/Page";
-import api from "../../lib/api";
+import api, { unwrap } from "../../lib/api";
 
 type Message = { id: string; content: string; createdAt: string; sender: { username: string } };
 
@@ -12,7 +12,7 @@ export function AdminMessagesPage() {
     setLoading(true);
     try {
       const { data } = await api.get("/admin/messages");
-      setMessages(data.items ?? []);
+      setMessages(unwrap<{ items: Message[] }>(data).items ?? []);
     } catch {
       setMessages([]);
     } finally {

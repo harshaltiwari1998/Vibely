@@ -71,4 +71,5 @@ dependencies {
     // 1-to-1 P2P calls use raw WebRTC directly (separate from LiveKit's SFU,
     // which is only for the many-viewer Live Streaming rooms).
     implementation("io.getstream:stream-webrtc-android:1.1.1")
+    implementation("com.razorpay:checkout:1.6.41")
 }

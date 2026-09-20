@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Page } from "../../components/Page";
-import api from "../../lib/api";
+import api, { unwrap } from "../../lib/api";
 
 type Call = { id: string; initiator: { username: string }; receiver: { username: string }; startedAt: string; durationSeconds: number; status: string };
 
@@ -12,7 +12,7 @@ export function AdminCallsPage() {
     setLoading(true);
     try {
       const { data } = await api.get("/admin/calls");
-      setCalls(data.items ?? []);
+      setCalls(unwrap<{ items: Call[] }>(data).items ?? []);
     } catch {
       setCalls([]);
     } finally {

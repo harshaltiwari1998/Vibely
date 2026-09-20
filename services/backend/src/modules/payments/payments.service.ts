@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, NotFoundException, Logger } from "@nestjs/common";
 import { PrismaService } from "../../database/prisma.service";
-import { PaymentProvider, PaymentWebhookPayload } from "./payment.provider";
+import { PaymentProvider } from "./payment.provider";
 import { RazorpayProvider } from "./razorpay.provider";
 import { WalletService } from "../wallet/wallet.service";
 import { ConfigService } from "@nestjs/config";
@@ -83,21 +83,26 @@ export class PaymentsService {
       }
     }
 
-    const existingPayment = await this.prisma.payment.findFirst({
-      where: {
-        idempotencyKey: idempotencyKey || undefined,
-        userId,
-        status: { in: ["PENDING", "SUCCEEDED"] },
-      },
-    });
-    if (existingPayment) {
-      return {
-        paymentId: existingPayment.id,
-        providerRef: existingPayment.providerRef || "",
-        amount: existingPayment.amount,
-        currency: existingPayment.currency,
-        status: existingPayment.status,
-      };
+    // Only short-circuit on a genuine idempotency replay (caller explicitly
+    // passed the same key back). Without this guard, `idempotencyKey ||
+    // undefined` drops the field from the query entirely and Prisma matches
+    // *any* pending/succeeded payment for the user — so a user who abandoned
+    // one recharge would get that stale order back for every later purchase,
+    // even a different pack, and without a providerKeyId (breaking checkout).
+    if (idempotencyKey) {
+      const existingPayment = await this.prisma.payment.findFirst({
+        where: { idempotencyKey, userId, status: { in: ["PENDING", "SUCCEEDED"] } },
+      });
+      if (existingPayment) {
+        return {
+          paymentId: existingPayment.id,
+          providerRef: existingPayment.providerRef || "",
+          amount: existingPayment.amount,
+          currency: existingPayment.currency,
+          status: existingPayment.status,
+          providerKeyId: this.configService.get<string>("payments.razorpay.keyId", ""),
+        };
+      }
     }
 
     const payment = await this.prisma.payment.create({
@@ -143,13 +148,14 @@ export class PaymentsService {
       amount: updatedPayment.amount,
       currency: updatedPayment.currency,
       status: updatedPayment.status,
+      providerKeyId: providerResponse.providerKeyId,
       redirectUrl: providerResponse.redirectUrl,
       qrCode: providerResponse.qrCode,
       upiLink: providerResponse.upiLink,
     };
   }
 
-  async verifyPayment(paymentId: string) {
+  async verifyPayment(paymentId: string, providerPaymentId?: string, signature?: string) {
     const payment = await this.prisma.payment.findUnique({
       where: { id: paymentId },
       include: { package: true },
@@ -169,6 +175,8 @@ export class PaymentsService {
     const verification = await this.provider.verifyPayment({
       paymentId: payment.id,
       providerRef: payment.providerRef,
+      providerPaymentId,
+      signature,
     });
 
     if (verification.status === "SUCCEEDED") {
@@ -177,6 +185,7 @@ export class PaymentsService {
           where: { id: paymentId },
           data: {
             status: "SUCCEEDED",
+            providerPaymentId: verification.providerPaymentId,
             verifiedAt: new Date(),
           },
         });
@@ -219,28 +228,33 @@ export class PaymentsService {
     return this.prisma.payment.findUnique({ where: { id: paymentId } });
   }
 
-  async handleWebhook(provider: string, rawPayload: unknown, signature?: string) {
-    if (provider !== this.provider.getProviderName()) {
-      throw new BadRequestException(`Unsupported provider: ${provider}`);
-    }
-
-    const payload = rawPayload as PaymentWebhookPayload;
-    if (!this.provider.verifyWebhookSignature(rawPayload, signature || "")) {
-      logger.warn("Invalid webhook signature", { provider, event: payload.event });
+  /**
+   * `rawBody` must be the exact bytes Razorpay sent (before JSON parsing) —
+   * the HMAC signature check fails on a re-serialized object even if the
+   * data is logically identical, because key order/whitespace can differ.
+   */
+  async handleWebhook(rawBody: Buffer | string, signature: string) {
+    if (!this.provider.verifyWebhookSignature(rawBody, signature || "")) {
+      logger.warn("Invalid webhook signature");
       throw new BadRequestException("Invalid webhook signature");
     }
 
+    const event = JSON.parse(rawBody.toString()) as {
+      event: string;
+      payload?: { payment?: { entity?: { id: string; order_id: string; status: string } } };
+    };
+    const entity = event.payload?.payment?.entity;
+    if (!entity?.order_id) {
+      logger.warn("Webhook missing payment entity", { event: event.event });
+      return { success: true };
+    }
+
     const existingPayment = await this.prisma.payment.findFirst({
-      where: {
-        OR: [
-          { id: payload.paymentId },
-          { providerRef: payload.providerRef },
-        ],
-      },
+      where: { providerRef: entity.order_id },
     });
 
     if (!existingPayment) {
-      logger.warn("Webhook received for unknown payment", { provider, paymentId: payload.paymentId });
+      logger.warn("Webhook received for unknown payment", { orderId: entity.order_id });
       return { success: true };
     }
 
@@ -248,14 +262,18 @@ export class PaymentsService {
       return { success: true };
     }
 
-    const newStatus = payload.status === "captured" || payload.status === "success" ? "SUCCEEDED" : "FAILED";
+    const newStatus = entity.status === "captured" ? "SUCCEEDED" : entity.status === "failed" ? "FAILED" : "PENDING";
+    if (newStatus === "PENDING") {
+      return { success: true };
+    }
 
     await this.prisma.$transaction(async (tx) => {
       const updatedPayment = await tx.payment.update({
         where: { id: existingPayment.id },
         data: {
           status: newStatus,
-          webhookPayload: JSON.stringify(rawPayload),
+          providerPaymentId: entity.id,
+          webhookPayload: rawBody.toString(),
           verifiedAt: new Date(),
         },
       });
@@ -322,9 +340,13 @@ export class PaymentsService {
       throw new BadRequestException("Payment is not in refundable state");
     }
 
+    if (!payment.providerPaymentId) {
+      throw new BadRequestException("Payment has no provider charge id to refund");
+    }
+
     const refundAmount = amount || payment.amount;
     const refund = await this.provider.refundPayment({
-      paymentId: payment.providerRef || paymentId,
+      paymentId: payment.providerPaymentId,
       amount: refundAmount,
       reason,
     });

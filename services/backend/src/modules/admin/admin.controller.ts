@@ -4,6 +4,7 @@ import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { Role } from "../../common/constants/roles";
+import { CurrentUser } from "../../common/decorators/current-user.decorator";
 
 @Controller("admin")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -37,8 +38,15 @@ export class AdminController {
   }
 
   @Post("users/:id/status")
-  updateUserStatus(@Param("id") id: string, @Body() body: { status: string; reason?: string }) {
-    return this.admin.updateUserStatus("admin", id, body.status as any, body.reason);
+  updateUserStatus(@CurrentUser() admin: { id: string }, @Param("id") id: string, @Body() body: { status: string; reason?: string }) {
+    return this.admin.updateUserStatus(admin.id, id, body.status as any, body.reason);
+  }
+
+  @Post("users/:id/role")
+  @UseGuards(RolesGuard)
+  @Roles(Role.SuperAdmin)
+  updateUserRole(@Param("id") id: string, @Body() body: { role: string }) {
+    return this.admin.updateUserRole(id, body.role as any);
   }
 
   @Get("reports")
@@ -97,7 +105,7 @@ export class AdminController {
   }
 
   @Post("settings")
-  updateSettings(@Body() settings: Record<string, any>) {
-    return this.admin.updateSettings("admin", settings);
+  updateSettings(@CurrentUser() admin: { id: string }, @Body() settings: Record<string, any>) {
+    return this.admin.updateSettings(admin.id, settings);
   }
 }

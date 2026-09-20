@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Page } from "../../components/Page";
-import api from "../../lib/api";
+import api, { unwrap } from "../../lib/api";
 
 type Settings = {
   appName: string;
@@ -18,7 +18,7 @@ export function AdminSettingsPage() {
   const load = async () => {
     try {
       const { data } = await api.get("/admin/settings");
-      setSettings(data);
+      setSettings(unwrap<Settings>(data));
     } catch {
       setSettings(null);
     }

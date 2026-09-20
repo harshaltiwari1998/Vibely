@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Page } from "../../components/Page";
-import api from "../../lib/api";
+import api, { unwrap } from "../../lib/api";
 
 type Report = {
   id: string;
@@ -19,7 +19,7 @@ export function AdminReportsPage() {
     setLoading(true);
     try {
       const { data } = await api.get("/admin/reports");
-      setReports(data.items ?? []);
+      setReports(unwrap<{ items: Report[] }>(data).items ?? []);
     } catch {
       setReports([]);
     } finally {

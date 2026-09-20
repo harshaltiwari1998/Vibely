@@ -47,7 +47,8 @@ fun ProfileScreen(
     onOpenLevel: () -> Unit = {},
     onOpenBadges: () -> Unit = {},
     onOpenFamily: () -> Unit = {},
-    onOpenMall: () -> Unit = {}
+    onOpenMall: () -> Unit = {},
+    onOpenChatPrice: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val balanceState by walletViewModel.balance.collectAsState()
@@ -60,7 +61,7 @@ fun ProfileScreen(
         ProfileMenuItem("My invitation", "invitation"),
         ProfileMenuItem("Mall", "mall"),
         ProfileMenuItem("My profile", "settings"),
-        ProfileMenuItem("My chat price")
+        ProfileMenuItem("My chat price", "chatprice")
     )
     Column(modifier = Modifier.fillMaxSize().background(Color.White).padding(20.dp)) {
         Row(verticalAlignment = Alignment.Top, modifier = Modifier.fillMaxWidth()) {
@@ -99,6 +100,7 @@ fun ProfileScreen(
                             "badges" -> onOpenBadges()
                             "family" -> onOpenFamily()
                             "mall" -> onOpenMall()
+                            "chatprice" -> onOpenChatPrice()
                             else -> Toast.makeText(context, "${item.label} is coming soon", Toast.LENGTH_SHORT).show()
                         }
                     }

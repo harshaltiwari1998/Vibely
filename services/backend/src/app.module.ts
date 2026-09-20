@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import configuration from "./config/configuration";
+import paymentsConfig from "./config/payments.config";
 import { DatabaseModule } from "./database/database.module";
 import { CacheModule } from "./cache/cache.module";
 import { RealtimeModule } from "./realtime/realtime.module";
@@ -32,10 +33,11 @@ import { LevelsModule } from "./modules/levels/levels.module";
 import { BadgesModule } from "./modules/badges/badges.module";
 import { MallModule } from "./modules/mall/mall.module";
 import { FamiliesModule } from "./modules/families/families.module";
+import { ChatPriceModule } from "./modules/chat-price/chat-price.module";
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true, load: [configuration] }),
+    ConfigModule.forRoot({ isGlobal: true, load: [configuration, paymentsConfig] }),
     DatabaseModule,
     CacheModule,
     RealtimeModule,
@@ -67,6 +69,7 @@ import { FamiliesModule } from "./modules/families/families.module";
     BadgesModule,
     MallModule,
     FamiliesModule,
+    ChatPriceModule,
   ],
 })
 export class AppModule {}

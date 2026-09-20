@@ -1,16 +1,19 @@
 package com.vibely.app.data.remote
 
 import com.vibely.app.data.remote.dto.AcceptMatchResponse
-import com.vibely.app.data.remote.dto.AddCoinsRequest
 import com.vibely.app.data.remote.dto.ApiEnvelope
 import com.vibely.app.data.remote.dto.AuthResponse
 import com.vibely.app.data.remote.dto.BlockedUserResponse
 import com.vibely.app.data.remote.dto.CallHistoryResponse
 import com.vibely.app.data.remote.dto.CallInitiateRequest
 import com.vibely.app.data.remote.dto.CallResponse
+import com.vibely.app.data.remote.dto.ChatPriceStatusResponse
+import com.vibely.app.data.remote.dto.SetChatPriceRequest
 import com.vibely.app.data.remote.dto.ChatMessagesResponse
 import com.vibely.app.data.remote.dto.ChatSummaryResponse
 import com.vibely.app.data.remote.dto.CreateFamilyRequest
+import com.vibely.app.data.remote.dto.CreatePaymentRequest
+import com.vibely.app.data.remote.dto.CreatePaymentResponse
 import com.vibely.app.data.remote.dto.FamilyDetailResponse
 import com.vibely.app.data.remote.dto.FamilyLeaderboardEntry
 import com.vibely.app.data.remote.dto.FamilySummaryResponse
@@ -44,6 +47,8 @@ import com.vibely.app.data.remote.dto.TaskClaimRequest
 import com.vibely.app.data.remote.dto.TaskClaimResponse
 import com.vibely.app.data.remote.dto.TaskResponse
 import com.vibely.app.data.remote.dto.UserResponse
+import com.vibely.app.data.remote.dto.VerifyPaymentRequestBody
+import com.vibely.app.data.remote.dto.VerifyPaymentResponseBody
 import com.vibely.app.data.remote.dto.VipPurchaseRequest
 import com.vibely.app.data.remote.dto.VipStatusResponse
 import com.vibely.app.data.remote.dto.VipTierResponse
@@ -89,8 +94,11 @@ interface ApiService {
     @GET("wallet")
     suspend fun getWallet(): ApiEnvelope<WalletResponse>
 
-    @POST("wallet/coins")
-    suspend fun addCoins(@Body dto: AddCoinsRequest): ApiEnvelope<Any>
+    @POST("payments/create")
+    suspend fun createPayment(@Body dto: CreatePaymentRequest): ApiEnvelope<CreatePaymentResponse>
+
+    @POST("payments/{paymentId}/verify")
+    suspend fun verifyPayment(@Path("paymentId") paymentId: String, @Body dto: VerifyPaymentRequestBody): ApiEnvelope<VerifyPaymentResponseBody>
 
     @GET("vip/tiers")
     suspend fun getVipTiers(): ApiEnvelope<List<VipTierResponse>>
@@ -220,4 +228,10 @@ interface ApiService {
 
     @DELETE("families/mine")
     suspend fun disbandFamily(): ApiEnvelope<SimpleSuccessResponse>
+
+    @GET("chat-price/me")
+    suspend fun getChatPriceStatus(): ApiEnvelope<ChatPriceStatusResponse>
+
+    @POST("chat-price")
+    suspend fun setChatPrice(@Body dto: SetChatPriceRequest): ApiEnvelope<ChatPriceStatusResponse>
 }

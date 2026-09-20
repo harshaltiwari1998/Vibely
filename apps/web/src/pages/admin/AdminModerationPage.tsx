@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Page } from "../../components/Page";
-import api from "../../lib/api";
+import api, { unwrap } from "../../lib/api";
 
 type ModerationAction = { id: string; action: string; reason: string; createdAt: string; moderator: { username: string }; targetUser: { username: string; status: string } };
 
@@ -12,7 +12,7 @@ export function AdminModerationPage() {
     setLoading(true);
     try {
       const { data } = await api.get("/admin/moderation/actions");
-      setActions(data.items ?? []);
+      setActions(unwrap<{ items: ModerationAction[] }>(data).items ?? []);
     } catch {
       setActions([]);
     } finally {

@@ -11,6 +11,18 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
+export function AdminRoute({ children }: { children: ReactNode }) {
+  const isAuthed = useAuthStore((s) => Boolean(s.accessToken));
+  const isAdmin = useAuthStore((s) => s.isAdmin());
+  if (!isAuthed) {
+    return <Navigate to="/login" replace />;
+  }
+  if (!isAdmin) {
+    return <Navigate to="/home" replace />;
+  }
+  return <>{children}</>;
+}
+
 export function Layout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-[#f7f7f8] text-gray-900">

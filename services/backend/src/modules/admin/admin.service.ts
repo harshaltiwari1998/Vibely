@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../../database/prisma.service";
 import { RedisService } from "../../cache/redis.service";
-import { UserStatus, ReportStatus } from "@prisma/client";
+import { UserStatus, ReportStatus, UserRole } from "@prisma/client";
 import { createLogger } from "@vibely/shared";
 
 const logger = createLogger("AdminService");
@@ -32,6 +32,7 @@ export class AdminService {
           username: true,
           email: true,
           status: true,
+          role: true,
           dateOfBirth: true,
           gender: true,
           country: true,
@@ -59,6 +60,7 @@ export class AdminService {
         username: true,
         email: true,
         status: true,
+        role: true,
         dateOfBirth: true,
         gender: true,
         country: true,
@@ -104,6 +106,20 @@ export class AdminService {
 
     logger.info("User status updated by admin", { adminId, userId, status, reason });
     return { success: true, status };
+  }
+
+  async updateUserRole(userId: string, role: UserRole) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException("User not found");
+
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: { role },
+      select: { id: true, username: true, role: true },
+    });
+
+    logger.warn("User role changed", { userId, role });
+    return { success: true, user: updated };
   }
 
   async getStats() {
@@ -320,7 +336,7 @@ export class AdminService {
 
   private async notifyUserOffline(userId: string) {
     try {
-      this.prisma.user.update({ where: { id: userId }, data: { status: UserStatus.SUSPENDED } });
+      await this.prisma.user.update({ where: { id: userId }, data: { status: UserStatus.SUSPENDED } });
     } catch {
       // ignore
     }

@@ -14,6 +14,7 @@ const links = [
 export function Navbar() {
   const navigate = useNavigate();
   const username = useAuthStore((s) => s.username);
+  const isAdmin = useAuthStore((s) => s.isAdmin());
 
   const onLogout = async () => {
     await logout();
@@ -43,6 +44,11 @@ export function Navbar() {
           ))}
         </nav>
         <div className="ml-auto flex items-center gap-3">
+          {isAdmin && (
+            <NavLink to="/admin" className="hidden rounded-lg bg-gray-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-gray-700 sm:inline-flex">
+              Admin
+            </NavLink>
+          )}
           {username && <span className="text-sm text-gray-500">@{username}</span>}
           <button className="hidden btn-secondary sm:inline-flex" onClick={onLogout}>
             Logout

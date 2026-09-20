@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Page } from "../../components/Page";
-import api from "../../lib/api";
+import api, { unwrap } from "../../lib/api";
 
-type Gift = { id: string; name: string; iconUrl?: string; coinAmount: number };
+type Gift = { id: string; name: string; iconUrl?: string; coinCost: number };
 
 export function AdminGiftsPage() {
   const [gifts, setGifts] = useState<Gift[]>([]);
@@ -12,7 +12,7 @@ export function AdminGiftsPage() {
     setLoading(true);
     try {
       const { data } = await api.get("/admin/gifts");
-      setGifts(data);
+      setGifts(unwrap<Gift[]>(data));
     } catch {
       setGifts([]);
     } finally {
@@ -33,7 +33,7 @@ export function AdminGiftsPage() {
         {gifts.map((g) => (
           <div key={g.id} className="card">
             <div className="text-lg font-semibold">{g.name}</div>
-            <div className="text-xs text-gray-500">{g.coinAmount} coins</div>
+            <div className="text-xs text-gray-500">{g.coinCost} coins</div>
           </div>
         ))}
       </div>

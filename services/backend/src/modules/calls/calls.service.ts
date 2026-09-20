@@ -5,6 +5,7 @@ import { RealtimeGateway } from "../../realtime/realtime.gateway";
 import { RealtimeEvent } from "@vibely/types";
 import { createLogger } from "@vibely/shared";
 import { LevelsService } from "../levels/levels.service";
+import { WalletService } from "../wallet/wallet.service";
 
 const logger = createLogger("CallsService");
 
@@ -17,6 +18,7 @@ export class CallsService {
     private readonly prisma: PrismaService,
     private readonly redis: RedisService,
     private readonly levels: LevelsService,
+    private readonly wallet: WalletService,
     @Inject(forwardRef(() => RealtimeGateway)) private readonly gateway: RealtimeGateway,
   ) {}
 
@@ -143,6 +145,12 @@ export class CallsService {
       await Promise.all([this.levels.awardXp(call.initiatorId, 15), this.levels.awardXp(call.receiverId, 15)]);
     }
 
+    // Random-match calls already cost a flat fee to start (see matching.service.ts);
+    // only bill per-minute for direct calls placed against someone's chat price.
+    if (!call.matchId && durationSeconds >= MIN_XP_CALL_DURATION_SECONDS) {
+      await this.billDirectCall(call.initiatorId, call.receiverId, callId, durationSeconds);
+    }
+
     const otherUserId = call.initiatorId === userId ? call.receiverId : call.initiatorId;
     this.gateway.server.to(otherUserId).emit(RealtimeEvent.CallEnded, {
       callId,
@@ -157,6 +165,23 @@ export class CallsService {
 
     logger.info("Call ended", { callId, userId, durationSeconds, reason });
     return updated;
+  }
+
+  private async billDirectCall(callerId: string, calleeId: string, callId: string, durationSeconds: number) {
+    const callee = await this.prisma.user.findUnique({ where: { id: calleeId }, select: { chatPricePerMinute: true } });
+    if (!callee || callee.chatPricePerMinute <= 0) return;
+
+    const minutesBilled = Math.ceil(durationSeconds / 60);
+    const nominalCost = minutesBilled * callee.chatPricePerMinute;
+
+    const callerWallet = await this.prisma.wallet.findUnique({ where: { userId: callerId } });
+    const chargeAmount = Math.min(nominalCost, callerWallet?.balance ?? 0);
+    if (chargeAmount <= 0) return;
+
+    await this.wallet.deductCoins(callerId, chargeAmount, "CALL_CHARGE", callId);
+    await this.wallet.addBeans(calleeId, chargeAmount);
+
+    logger.info("Direct call billed", { callId, callerId, calleeId, chargeAmount, nominalCost });
   }
 
   async rejectCall(callId: string, userId: string) {

@@ -27,6 +27,23 @@ export class WalletService {
     return { balance: wallet.balance };
   }
 
+  async getBeans(userId: string) {
+    const wallet = await this.ensureWallet(userId);
+    return { beans: wallet.beans };
+  }
+
+  async addBeans(userId: string, amount: number) {
+    if (amount <= 0) {
+      return this.getBeans(userId);
+    }
+    await this.ensureWallet(userId);
+    const updated = await this.prisma.wallet.update({
+      where: { userId },
+      data: { beans: { increment: amount } },
+    });
+    return { beans: updated.beans };
+  }
+
   async getTransactions(userId: string) {
     const transactions = await this.prisma.coinTransaction.findMany({
       where: { userId },

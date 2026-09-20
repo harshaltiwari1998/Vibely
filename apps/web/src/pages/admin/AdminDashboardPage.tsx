@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Page } from "../../components/Page";
-import api from "../../lib/api";
+import api, { unwrap } from "../../lib/api";
 
 type Stats = {
   totalUsers: number;
@@ -23,7 +23,7 @@ export function AdminDashboardPage() {
     setLoading(true);
     try {
       const { data } = await api.get("/admin/dashboard");
-      setStats(data);
+      setStats(unwrap<Stats>(data));
     } catch {
       setStats(null);
     } finally {

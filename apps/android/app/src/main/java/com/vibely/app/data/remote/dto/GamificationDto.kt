@@ -110,3 +110,14 @@ data class FamilyLeaderboardEntry(
 data class SimpleSuccessResponse(
     val success: Boolean
 )
+
+data class ChatPriceStatusResponse(
+    val pricePerMinute: Int,
+    val maxPricePerMinute: Int,
+    val level: Int,
+    val beans: Int
+)
+
+data class SetChatPriceRequest(
+    val pricePerMinute: Int
+)

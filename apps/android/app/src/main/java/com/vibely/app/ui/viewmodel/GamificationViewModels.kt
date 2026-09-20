@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vibely.app.data.remote.ApiService
 import com.vibely.app.data.remote.dto.BadgeResponse
+import com.vibely.app.data.remote.dto.ChatPriceStatusResponse
+import com.vibely.app.data.remote.dto.SetChatPriceRequest
 import com.vibely.app.data.remote.dto.CreateFamilyRequest
 import com.vibely.app.data.remote.dto.FamilyDetailResponse
 import com.vibely.app.data.remote.dto.FamilyLeaderboardEntry
@@ -357,6 +359,58 @@ class FamilyViewModel(private val api: ApiService) : ViewModel() {
                 _message.value = e.message ?: "Network error"
             } finally {
                 _isBusy.value = false
+            }
+        }
+    }
+
+    fun consumeMessage() {
+        _message.value = null
+    }
+}
+
+class ChatPriceViewModel(private val api: ApiService) : ViewModel() {
+    private val _status = MutableStateFlow<UiState<ChatPriceStatusResponse>>(UiState.Loading)
+    val status: StateFlow<UiState<ChatPriceStatusResponse>> = _status.asStateFlow()
+
+    private val _isSaving = MutableStateFlow(false)
+    val isSaving: StateFlow<Boolean> = _isSaving.asStateFlow()
+
+    private val _message = MutableStateFlow<String?>(null)
+    val message: StateFlow<String?> = _message.asStateFlow()
+
+    init { refresh() }
+
+    fun refresh() {
+        viewModelScope.launch {
+            try {
+                val resp = api.getChatPriceStatus()
+                if (resp.success && resp.data != null) {
+                    _status.value = UiState.Success(resp.data)
+                } else {
+                    _status.value = UiState.Error(resp.message ?: "Failed to load chat price")
+                }
+            } catch (e: Exception) {
+                _status.value = UiState.Error(e.message ?: "Network error")
+            }
+        }
+    }
+
+    fun setPrice(price: Int) {
+        if (_isSaving.value) return
+        viewModelScope.launch {
+            _isSaving.value = true
+            try {
+                val resp = api.setChatPrice(SetChatPriceRequest(price))
+                if (resp.success && resp.data != null) {
+                    _status.value = UiState.Success(resp.data)
+                    _message.value = "Chat price updated"
+                } else {
+                    _message.value = resp.message ?: "Could not update price"
+                }
+            } catch (e: Exception) {
+                _message.value = e.message ?: "Network error"
+            } finally {
+                _isSaving.value = false
             }
         }
     }

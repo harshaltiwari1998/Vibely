@@ -8,11 +8,12 @@ import com.vibely.app.data.model.User
 import com.vibely.app.data.realtime.SocketManager
 import com.vibely.app.data.remote.ApiClient
 import com.vibely.app.data.remote.ApiService
+import com.vibely.app.data.payment.RazorpayCheckoutBridge
 import com.vibely.app.data.remote.dto.ChatSummaryResponse
+import com.vibely.app.data.remote.dto.CreatePaymentRequest
 import com.vibely.app.data.remote.dto.LiveRoomResponse
 import com.vibely.app.data.remote.dto.MatchStartRequest
 import com.vibely.app.data.remote.dto.NotificationResponse
-import com.vibely.app.data.remote.dto.AddCoinsRequest
 import com.vibely.app.data.remote.dto.BlockedUserResponse
 import com.vibely.app.data.remote.dto.GiftResponse
 import com.vibely.app.data.remote.dto.ReferralInfoResponse
@@ -22,6 +23,7 @@ import com.vibely.app.data.remote.dto.StartChatRequest
 import com.vibely.app.data.remote.dto.TaskClaimRequest
 import com.vibely.app.data.remote.dto.TaskResponse
 import com.vibely.app.data.remote.dto.UserResponse
+import com.vibely.app.data.remote.dto.VerifyPaymentRequestBody
 import com.vibely.app.data.remote.dto.VipPurchaseRequest
 import com.vibely.app.data.remote.dto.VipStatusResponse
 import com.vibely.app.data.remote.dto.VipTierResponse
@@ -47,6 +49,15 @@ sealed class MatchUiState {
     data class Error(val message: String) : MatchUiState()
 }
 
+data class CheckoutRequest(
+    val paymentId: String,
+    val orderId: String,
+    val keyId: String,
+    val amountPaise: Int,
+    val currency: String,
+    val diamonds: Int
+)
+
 class WalletViewModel(private val api: ApiService) : ViewModel() {
     private val _balance = MutableStateFlow<UiState<Int>>(UiState.Loading)
     val balance: StateFlow<UiState<Int>> = _balance.asStateFlow()
@@ -56,6 +67,9 @@ class WalletViewModel(private val api: ApiService) : ViewModel() {
 
     private val _rechargeMessage = MutableStateFlow<String?>(null)
     val rechargeMessage: StateFlow<String?> = _rechargeMessage.asStateFlow()
+
+    private val _checkoutRequest = MutableStateFlow<CheckoutRequest?>(null)
+    val checkoutRequest: StateFlow<CheckoutRequest?> = _checkoutRequest.asStateFlow()
 
     init { refresh() }
 
@@ -74,18 +88,57 @@ class WalletViewModel(private val api: ApiService) : ViewModel() {
         }
     }
 
-    /** Mock recharge: credits diamonds instantly with no real payment gateway involved. */
-    fun mockRecharge(diamonds: Int) {
+    /** Creates a real Razorpay order; WalletScreen opens the Checkout SDK once [checkoutRequest] is set. */
+    fun purchase(diamonds: Int, rupees: Int) {
         if (_isPurchasing.value) return
         viewModelScope.launch {
             _isPurchasing.value = true
             try {
-                val resp = api.addCoins(AddCoinsRequest(diamonds))
-                if (resp.success) {
-                    refresh()
-                    _rechargeMessage.value = "Recharge successful! +$diamonds 💎"
+                val resp = api.createPayment(CreatePaymentRequest(coins = diamonds, amount = rupees))
+                val data = resp.data
+                if (resp.success && data != null && !data.providerKeyId.isNullOrBlank()) {
+                    RazorpayCheckoutBridge.onResult = { success, razorpayPaymentId, signature, errorMessage ->
+                        onCheckoutResult(data.paymentId, success, razorpayPaymentId, signature, errorMessage)
+                    }
+                    _checkoutRequest.value = CheckoutRequest(
+                        paymentId = data.paymentId,
+                        orderId = data.providerRef,
+                        keyId = data.providerKeyId,
+                        amountPaise = data.amount * 100,
+                        currency = data.currency,
+                        diamonds = diamonds
+                    )
                 } else {
-                    _rechargeMessage.value = resp.message ?: "Recharge failed"
+                    _rechargeMessage.value = resp.message ?: "Could not start payment"
+                    _isPurchasing.value = false
+                }
+            } catch (e: Exception) {
+                _rechargeMessage.value = e.message ?: "Network error"
+                _isPurchasing.value = false
+            }
+        }
+    }
+
+    /** Called by WalletScreen right after it hands the request off to the Checkout SDK. */
+    fun consumeCheckoutRequest() {
+        _checkoutRequest.value = null
+    }
+
+    private fun onCheckoutResult(paymentId: String, success: Boolean, razorpayPaymentId: String?, signature: String?, errorMessage: String?) {
+        RazorpayCheckoutBridge.onResult = null
+        if (!success) {
+            _rechargeMessage.value = errorMessage ?: "Payment cancelled"
+            _isPurchasing.value = false
+            return
+        }
+        viewModelScope.launch {
+            try {
+                val resp = api.verifyPayment(paymentId, VerifyPaymentRequestBody(providerPaymentId = razorpayPaymentId, signature = signature))
+                if (resp.success && resp.data?.status == "SUCCEEDED") {
+                    refresh()
+                    _rechargeMessage.value = "Recharge successful! +${resp.data.coins} 💎"
+                } else {
+                    _rechargeMessage.value = "Payment could not be verified"
                 }
             } catch (e: Exception) {
                 _rechargeMessage.value = e.message ?: "Network error"

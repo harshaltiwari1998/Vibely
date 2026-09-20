@@ -84,7 +84,7 @@ export class AuthService {
       await this.referrals.applyReferral(user.id, dto.referralCode);
     }
 
-    const tokens = this.issueTokens(user.id, user.email, Role.User);
+    const tokens = this.issueTokens(user.id, user.email, user.role as Role);
     await this.createSession(user.id, tokens.refreshToken);
 
     logger.info("User registered", { userId: user.id });
@@ -94,7 +94,7 @@ export class AuthService {
       username: user.username,
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
-      user: { id: user.id, username: user.username, email: user.email, status: user.status },
+      user: { id: user.id, username: user.username, email: user.email, status: user.status, role: user.role },
     };
   }
 
@@ -108,13 +108,13 @@ export class AuthService {
     if (user.status === "BANNED") throw new ForbiddenException("Account banned");
     if (user.status === "SUSPENDED") throw new ForbiddenException("Account suspended");
 
-    const tokens = this.issueTokens(user.id, user.email, Role.User);
+    const tokens = this.issueTokens(user.id, user.email, user.role as Role);
     await this.createSession(user.id, tokens.refreshToken);
 
     return {
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
-      user: { id: user.id, username: user.username, email: user.email, status: user.status },
+      user: { id: user.id, username: user.username, email: user.email, status: user.status, role: user.role },
     };
   }
 
@@ -133,7 +133,10 @@ export class AuthService {
     });
     if (!session) throw new UnauthorizedException("Invalid refresh token");
 
-    const tokens = this.issueTokens(payload.sub, "", Role.User);
+    const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
+    if (!user) throw new UnauthorizedException("Invalid refresh token");
+
+    const tokens = this.issueTokens(user.id, user.email, user.role as Role);
     await this.prisma.userSession.update({
       where: { id: session.id },
       data: { refreshToken: tokens.refreshToken },

@@ -54,6 +54,7 @@ import com.vibely.app.data.remote.ApiService
 import com.vibely.app.ui.badges.BadgesScreen
 import com.vibely.app.ui.call.CallScreen
 import com.vibely.app.ui.chat.ChatScreen
+import com.vibely.app.ui.chatprice.ChatPriceScreen
 import com.vibely.app.ui.family.FamilyScreen
 import com.vibely.app.ui.gifts.GiftsScreen
 import com.vibely.app.ui.history.HistoryScreen
@@ -73,6 +74,7 @@ import com.vibely.app.ui.settings.SettingsScreen
 import com.vibely.app.ui.tasks.TaskCenterScreen
 import com.vibely.app.ui.viewmodel.BadgesViewModel
 import com.vibely.app.ui.viewmodel.CallViewModel
+import com.vibely.app.ui.viewmodel.ChatPriceViewModel
 import com.vibely.app.ui.viewmodel.ChatViewModel
 import com.vibely.app.ui.viewmodel.DiscoverViewModel
 import com.vibely.app.ui.viewmodel.FamilyViewModel
@@ -278,7 +280,8 @@ fun MainScreen(api: ApiService, token: String?, userId: String?, onLogout: () ->
                         onOpenLevel = { navController.navigate(Screen.Level.route) },
                         onOpenBadges = { navController.navigate(Screen.Badges.route) },
                         onOpenFamily = { navController.navigate(Screen.Family.route) },
-                        onOpenMall = { navController.navigate(Screen.Mall.route) }
+                        onOpenMall = { navController.navigate(Screen.Mall.route) },
+                        onOpenChatPrice = { navController.navigate(Screen.ChatPrice.route) }
                     )
                 }
                 composable(Screen.Tasks.route) {
@@ -304,6 +307,10 @@ fun MainScreen(api: ApiService, token: String?, userId: String?, onLogout: () ->
                 composable(Screen.Mall.route) {
                     val mallViewModel = remember { MallViewModel(api) }
                     MallScreen(viewModel = mallViewModel, onWalletChanged = { walletViewModel.refresh() }, onBack = { navController.popBackStack() })
+                }
+                composable(Screen.ChatPrice.route) {
+                    val chatPriceViewModel = remember { ChatPriceViewModel(api) }
+                    ChatPriceScreen(viewModel = chatPriceViewModel, onBack = { navController.popBackStack() })
                 }
                 composable(Screen.Wallet.route) { WalletScreen(viewModel = walletViewModel) }
                 composable(Screen.Vip.route) {

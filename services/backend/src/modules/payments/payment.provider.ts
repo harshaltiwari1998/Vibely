@@ -14,6 +14,8 @@ export interface CreatePaymentResponse {
   amount: number;
   currency: string;
   status: string;
+  /** Public client key the app/web checkout SDK needs to open the payment sheet. */
+  providerKeyId?: string;
   redirectUrl?: string;
   qrCode?: string;
  upiLink?: string;
@@ -22,6 +24,8 @@ export interface CreatePaymentResponse {
 export interface VerifyPaymentRequest {
   paymentId: string;
   providerRef: string;
+  /** The charge id the provider's checkout SDK returns to the client (e.g. razorpay_payment_id). */
+  providerPaymentId?: string;
   signature?: string;
 }
 
@@ -30,6 +34,7 @@ export interface VerifyPaymentResponse {
   status: "SUCCEEDED" | "FAILED" | "PENDING";
   amount: number;
   currency: string;
+  providerPaymentId?: string;
 }
 
 export interface RefundPaymentRequest {

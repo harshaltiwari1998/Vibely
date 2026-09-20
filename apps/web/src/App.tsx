@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { ProtectedRoute, Layout } from "./components/Layout";
+import { ProtectedRoute, AdminRoute, Layout } from "./components/Layout";
+import { AdminLayout } from "./components/AdminLayout";
 import { LandingPage } from "./pages/LandingPage";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
@@ -43,6 +44,14 @@ function Protected({ element }: { element: JSX.Element }) {
   );
 }
 
+function AdminProtected({ element }: { element: JSX.Element }) {
+  return (
+    <AdminRoute>
+      <AdminLayout>{element}</AdminLayout>
+    </AdminRoute>
+  );
+}
+
 export function App() {
   return (
     <BrowserRouter>
@@ -72,16 +81,16 @@ export function App() {
         <Route path="/tasks" element={<Protected element={<TaskCenterPage />} />} />
         <Route path="/invitation" element={<Protected element={<InvitationPage />} />} />
 
-        <Route path="/admin" element={<Protected element={<AdminDashboardPage />} />} />
-        <Route path="/admin/users" element={<Protected element={<AdminUsersPage />} />} />
-        <Route path="/admin/reports" element={<Protected element={<AdminReportsPage />} />} />
-        <Route path="/admin/calls" element={<Protected element={<AdminCallsPage />} />} />
-        <Route path="/admin/messages" element={<Protected element={<AdminMessagesPage />} />} />
-        <Route path="/admin/transactions" element={<Protected element={<AdminTransactionsPage />} />} />
-        <Route path="/admin/gifts" element={<Protected element={<AdminGiftsPage />} />} />
-        <Route path="/admin/moderation" element={<Protected element={<AdminModerationPage />} />} />
-        <Route path="/admin/analytics" element={<Protected element={<AdminAnalyticsPage />} />} />
-        <Route path="/admin/settings" element={<Protected element={<AdminSettingsPage />} />} />
+        <Route path="/admin" element={<AdminProtected element={<AdminDashboardPage />} />} />
+        <Route path="/admin/users" element={<AdminProtected element={<AdminUsersPage />} />} />
+        <Route path="/admin/reports" element={<AdminProtected element={<AdminReportsPage />} />} />
+        <Route path="/admin/calls" element={<AdminProtected element={<AdminCallsPage />} />} />
+        <Route path="/admin/messages" element={<AdminProtected element={<AdminMessagesPage />} />} />
+        <Route path="/admin/transactions" element={<AdminProtected element={<AdminTransactionsPage />} />} />
+        <Route path="/admin/gifts" element={<AdminProtected element={<AdminGiftsPage />} />} />
+        <Route path="/admin/moderation" element={<AdminProtected element={<AdminModerationPage />} />} />
+        <Route path="/admin/analytics" element={<AdminProtected element={<AdminAnalyticsPage />} />} />
+        <Route path="/admin/settings" element={<AdminProtected element={<AdminSettingsPage />} />} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

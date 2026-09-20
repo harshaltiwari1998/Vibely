@@ -10,7 +10,7 @@ import { createLogger } from "@vibely/shared";
 const logger = createLogger("Bootstrap");
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { rawBody: true });
 
   app.setGlobalPrefix("api");
   app.useGlobalPipes(
