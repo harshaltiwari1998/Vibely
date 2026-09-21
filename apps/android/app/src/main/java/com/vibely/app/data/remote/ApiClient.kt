@@ -11,7 +11,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 object ApiClient {
-    private const val BASE_URL = "http://192.168.29.48:4000/api/"
+    private const val BASE_URL = "https://vibely-backend-production-99a5.up.railway.app/api/"
 
     /** Base URL for Socket.IO connections (no trailing `/api`). */
     fun socketBaseUrl(): String = BASE_URL.removeSuffix("/api/")
