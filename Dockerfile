@@ -1,5 +1,7 @@
 # Multi-stage build for the NestJS backend, run from the monorepo root:
-#   docker build -f services/backend/Dockerfile -t vibely-backend .
+#   docker build -t vibely-backend .
+# Lives at the repo root (not services/backend/) so Railway's builder
+# auto-detects it without extra config.
 
 FROM node:20-slim AS builder
 WORKDIR /app
