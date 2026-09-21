@@ -1,6 +1,7 @@
 package com.vibely.app.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.navigation.NavHostController
@@ -20,21 +21,24 @@ import com.vibely.app.ui.viewmodel.AuthViewModel
 fun VibelyNavGraph(navController: NavHostController, authViewModel: AuthViewModel, api: ApiService, tokenManager: TokenManager) {
     val authState by authViewModel.state.collectAsState()
 
+    // Login and Signup are separate destinations, but a successful auth on
+    // either one must navigate to "main" — watching this at the graph level
+    // (rather than inside just the "auth" route) means it fires no matter
+    // which of the two screens the user is currently on.
+    LaunchedEffect(authState) {
+        if (authState is AuthState.Success && navController.currentDestination?.route != "main") {
+            navController.navigate("main") {
+                popUpTo(0) { inclusive = true }
+            }
+        }
+    }
+
     NavHost(navController = navController, startDestination = "auth") {
         composable("auth") {
-            when {
-                authState is AuthState.Success -> {
-                    navController.navigate("main") {
-                        popUpTo("auth") { inclusive = true }
-                    }
-                }
-                else -> {
-                    LoginScreen(
-                        viewModel = authViewModel,
-                        onNavigateToSignup = { navController.navigate("signup") }
-                    )
-                }
-            }
+            LoginScreen(
+                viewModel = authViewModel,
+                onNavigateToSignup = { navController.navigate("signup") }
+            )
         }
         composable("signup") {
             SignupScreen(
