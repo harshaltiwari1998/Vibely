@@ -9,16 +9,32 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
+import com.vibely.app.data.remote.ApiService
+import kotlinx.coroutines.launch
+import retrofit2.HttpException
+
+const val PRIVACY_POLICY_URL = "https://vibely-app-alpha.vercel.app/privacy"
 
 private fun formatBytes(bytes: Long): String {
     if (bytes < 1024 * 1024) return "${bytes / 1024} KB"
@@ -32,8 +48,9 @@ private fun clearCacheDir(dir: java.io.File): Long {
 }
 
 @Composable
-fun SettingsScreen(onLogout: () -> Unit, onOpenBlacklist: () -> Unit = {}) {
+fun SettingsScreen(api: ApiService, onLogout: () -> Unit, onOpenBlacklist: () -> Unit = {}) {
     val context = LocalContext.current
+    var showDeleteDialog by remember { mutableStateOf(false) }
     Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF8FAFC)).verticalScroll(rememberScrollState())) {
         Text(
             text = "Settings",
@@ -43,11 +60,12 @@ fun SettingsScreen(onLogout: () -> Unit, onOpenBlacklist: () -> Unit = {}) {
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             color = Color(0xFF111827)
         )
-        listOf("App Language" to "English", "Account" to "", "Message Notification" to "", "Set password" to "To bind", "Withdrawal password" to "", "Google" to "Connected", "Privacy settings" to "", "Personal blacklist" to "", "Clear cache" to "", "About us" to "V1.1.2.2").forEach { (label, value) ->
+        listOf("App Language" to "English", "Account" to "", "Message Notification" to "", "Set password" to "To bind", "Withdrawal password" to "", "Google" to "Connected", "Privacy settings" to "", "Personal blacklist" to "", "Clear cache" to "", "Privacy policy" to "", "About us" to "V1.1.2.2").forEach { (label, value) ->
             Row(
                 modifier = Modifier.fillMaxWidth().clickable {
                     when (label) {
                         "Personal blacklist" -> onOpenBlacklist()
+                        "Privacy policy" -> context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY_POLICY_URL)))
                         "Clear cache" -> {
                             val freed = clearCacheDir(context.cacheDir)
                             Toast.makeText(context, "Cleared ${formatBytes(freed)}", Toast.LENGTH_SHORT).show()
@@ -68,5 +86,78 @@ fun SettingsScreen(onLogout: () -> Unit, onOpenBlacklist: () -> Unit = {}) {
         ) {
             Text("Log out", modifier = Modifier.weight(1f), color = Color(0xFFEF4444), fontSize = 21.sp, fontWeight = FontWeight.Bold)
         }
+        Row(
+            modifier = Modifier.fillMaxWidth().clickable { showDeleteDialog = true }.padding(horizontal = 24.dp, vertical = 21.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Delete account", modifier = Modifier.weight(1f), color = Color(0xFF9CA3AF), fontSize = 17.sp)
+        }
     }
+
+    if (showDeleteDialog) {
+        DeleteAccountDialog(
+            api = api,
+            onDismiss = { showDeleteDialog = false },
+            onDeleted = {
+                showDeleteDialog = false
+                Toast.makeText(context, "Your account has been deleted", Toast.LENGTH_LONG).show()
+                onLogout()
+            }
+        )
+    }
+}
+
+@Composable
+private fun DeleteAccountDialog(api: ApiService, onDismiss: () -> Unit, onDeleted: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    var password by remember { mutableStateOf("") }
+    var error by remember { mutableStateOf<String?>(null) }
+    var deleting by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = { if (!deleting) onDismiss() },
+        title = { Text("Delete account?") },
+        text = {
+            Column {
+                Text(
+                    "This permanently deletes your profile, photos, chats access and remaining coins. It cannot be undone. Enter your password to confirm.",
+                    fontSize = 14.sp,
+                    color = Color(0xFF6B7280)
+                )
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it; error = null },
+                    label = { Text("Password") },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    isError = error != null,
+                    supportingText = error?.let { { Text(it) } },
+                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp)
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = password.isNotEmpty() && !deleting,
+                onClick = {
+                    deleting = true
+                    scope.launch {
+                        try {
+                            api.deleteAccount(mapOf("password" to password))
+                            onDeleted()
+                        } catch (e: HttpException) {
+                            error = if (e.code() == 401) "Incorrect password" else "Couldn't delete account (${e.code()})"
+                        } catch (e: Exception) {
+                            error = e.message ?: "Network error"
+                        } finally {
+                            deleting = false
+                        }
+                    }
+                }
+            ) { Text(if (deleting) "Deleting…" else "Delete", color = Color(0xFFEF4444)) }
+        },
+        dismissButton = {
+            TextButton(enabled = !deleting, onClick = onDismiss) { Text("Cancel") }
+        }
+    )
 }

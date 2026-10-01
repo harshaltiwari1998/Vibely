@@ -30,6 +30,7 @@ enum UserStatus {
   RESTRICTED
   SUSPENDED
   BANNED
+  DELETED
 }
 
 enum UserRole {
@@ -69,6 +70,7 @@ model User {
   featuredBadgeId String?
   familyId     String?
   chatPricePerMinute Int  @default(0)
+  deletedAt    DateTime?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
@@ -468,6 +470,8 @@ model CoinPackage {
   coins       Int
   price       Int
   currency    String   @default("INR")
+  /// Matching in-app product ID in Play Console (Android purchases).
+  playProductId String? @unique
   active      Boolean  @default(true)
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())
@@ -500,6 +504,10 @@ model Payment {
   webhookPayload  String?
   verifiedAt      DateTime?
   metadata        String?
+  /// Set when the Android user picked Razorpay on Play's user choice screen;
+  /// the purchase must then be reported to Google within 24 hours.
+  externalTransactionToken String?
+  googleReportedAt DateTime?
   createdAt       DateTime      @default(now())
 
   @@index([userId])

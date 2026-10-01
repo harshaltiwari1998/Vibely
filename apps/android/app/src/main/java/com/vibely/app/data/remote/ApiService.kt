@@ -12,7 +12,10 @@ import com.vibely.app.data.remote.dto.SetChatPriceRequest
 import com.vibely.app.data.remote.dto.ChatMessagesResponse
 import com.vibely.app.data.remote.dto.ChatSummaryResponse
 import com.vibely.app.data.remote.dto.CreateFamilyRequest
+import com.vibely.app.data.remote.dto.CoinPackageResponse
 import com.vibely.app.data.remote.dto.CreatePaymentRequest
+import com.vibely.app.data.remote.dto.GooglePlayVerifyRequest
+import com.vibely.app.data.remote.dto.GooglePlayVerifyResponse
 import com.vibely.app.data.remote.dto.CreatePaymentResponse
 import com.vibely.app.data.remote.dto.FamilyDetailResponse
 import com.vibely.app.data.remote.dto.FamilyLeaderboardEntry
@@ -82,6 +85,9 @@ interface ApiService {
     @GET("users/me")
     suspend fun getCurrentUser(): ApiEnvelope<UserResponse>
 
+    @POST("users/me/delete")
+    suspend fun deleteAccount(@Body body: Map<String, String>): ApiEnvelope<Any>
+
     @GET("users")
     suspend fun listUsers(): ApiEnvelope<List<UserResponse>>
 
@@ -112,6 +118,12 @@ interface ApiService {
 
     @GET("wallet")
     suspend fun getWallet(): ApiEnvelope<WalletResponse>
+
+    @GET("payments/packages")
+    suspend fun getCoinPackages(): ApiEnvelope<List<CoinPackageResponse>>
+
+    @POST("payments/google-play/verify")
+    suspend fun verifyGooglePlayPurchase(@Body dto: GooglePlayVerifyRequest): ApiEnvelope<GooglePlayVerifyResponse>
 
     @POST("payments/create")
     suspend fun createPayment(@Body dto: CreatePaymentRequest): ApiEnvelope<CreatePaymentResponse>

@@ -1,24 +1,49 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
 }
 
+// Upload-key credentials live in apps/android/keystore.properties (gitignored),
+// or in env vars on CI. Without them, release builds are left unsigned.
+val keystoreProps = Properties().apply {
+    val f = rootProject.file("keystore.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+fun signingValue(key: String, env: String): String? =
+    keystoreProps.getProperty(key) ?: System.getenv(env)
+
 android {
     namespace = "com.vibely.app"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.vibely.app"
-        minSdk = 24
-        targetSdk = 34
+        minSdk = 26
+        targetSdk = 36
         versionCode = 1
-        versionName = "0.1.0"
+        versionName = "1.0.0"
+    }
+
+    signingConfigs {
+        val storePath = signingValue("storeFile", "VIBELY_KEYSTORE_PATH")
+        if (storePath != null) {
+            create("release") {
+                storeFile = file(storePath)
+                storePassword = signingValue("storePassword", "VIBELY_KEYSTORE_PASSWORD")
+                keyAlias = signingValue("keyAlias", "VIBELY_KEY_ALIAS")
+                keyPassword = signingValue("keyPassword", "VIBELY_KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.findByName("release")
         }
     }
 
@@ -33,6 +58,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     composeOptions {
@@ -72,4 +98,6 @@ dependencies {
     // which is only for the many-viewer Live Streaming rooms).
     implementation("io.getstream:stream-webrtc-android:1.1.1")
     implementation("com.razorpay:checkout:1.6.41")
+    // Google Play Billing with user choice billing (Razorpay offered as the alternative in India).
+    implementation("com.android.billingclient:billing:8.3.0")
 }

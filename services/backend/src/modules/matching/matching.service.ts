@@ -215,7 +215,7 @@ export class MatchingService {
     const blockedByIds = new Set(blockedByRows.map((b) => b.blockerId));
 
     const candidates = await this.prisma.user.findMany({
-      where: { id: { in: candidateIds }, status: { notIn: ["BANNED", "SUSPENDED"] } },
+      where: { id: { in: candidateIds }, status: { notIn: ["BANNED", "SUSPENDED", "DELETED"] } },
       include: { profile: true, preferences: true },
     });
 

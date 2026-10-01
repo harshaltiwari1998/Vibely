@@ -41,6 +41,7 @@ local.properties
 captures/
 *.jks
 *.keystore
+keystore.properties
 
 # Editor / OS
 .idea/

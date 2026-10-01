@@ -5,6 +5,8 @@ import { LandingPage } from "./pages/LandingPage";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
+import { PrivacyPolicyPage } from "./pages/PrivacyPolicyPage";
+import { DeleteAccountPage } from "./pages/DeleteAccountPage";
 import { HomePage } from "./pages/HomePage";
 import { DiscoverPage } from "./pages/DiscoverPage";
 import { MatchPage } from "./pages/MatchPage";
@@ -61,6 +63,8 @@ export function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/privacy" element={<PrivacyPolicyPage />} />
+        <Route path="/delete-account" element={<DeleteAccountPage />} />
 
         <Route path="/home" element={<Protected element={<HomePage />} />} />
         <Route path="/discover" element={<Protected element={<DiscoverPage />} />} />

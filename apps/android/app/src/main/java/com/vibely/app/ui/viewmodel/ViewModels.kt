@@ -1,5 +1,6 @@
 package com.vibely.app.ui.viewmodel
 
+import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vibely.app.data.model.CallLog
@@ -7,9 +8,15 @@ import com.vibely.app.data.model.ChatMessage
 import com.vibely.app.data.realtime.SocketManager
 import com.vibely.app.data.remote.ApiClient
 import com.vibely.app.data.remote.ApiService
+import com.android.billingclient.api.ProductDetails
+import com.android.billingclient.api.Purchase
+import com.vibely.app.data.payment.BillingEvent
+import com.vibely.app.data.payment.BillingManager
+import com.vibely.app.data.payment.BillingUnavailableException
 import com.vibely.app.data.payment.RazorpayCheckoutBridge
 import com.vibely.app.data.remote.dto.ChatSummaryResponse
 import com.vibely.app.data.remote.dto.CreatePaymentRequest
+import com.vibely.app.data.remote.dto.GooglePlayVerifyRequest
 import com.vibely.app.data.remote.dto.LiveRoomResponse
 import com.vibely.app.data.remote.dto.MatchStartRequest
 import com.vibely.app.data.remote.dto.NotificationResponse
@@ -57,9 +64,26 @@ data class CheckoutRequest(
     val diamonds: Int
 )
 
-class WalletViewModel(private val api: ApiService) : ViewModel() {
+/** A purchasable coin pack: server package plus its Google Play product, if one is set up. */
+data class CoinPack(
+    val packageId: String,
+    val playProductId: String?,
+    val coins: Int,
+    /** Localized Play price when available, otherwise the server's INR price. */
+    val priceLabel: String,
+    val product: ProductDetails?
+)
+
+class WalletViewModel(
+    private val api: ApiService,
+    private val billing: BillingManager,
+    private val userId: String?
+) : ViewModel() {
     private val _balance = MutableStateFlow<UiState<Int>>(UiState.Loading)
     val balance: StateFlow<UiState<Int>> = _balance.asStateFlow()
+
+    private val _packs = MutableStateFlow<UiState<List<CoinPack>>>(UiState.Loading)
+    val packs: StateFlow<UiState<List<CoinPack>>> = _packs.asStateFlow()
 
     private val _isPurchasing = MutableStateFlow(false)
     val isPurchasing: StateFlow<Boolean> = _isPurchasing.asStateFlow()
@@ -70,7 +94,16 @@ class WalletViewModel(private val api: ApiService) : ViewModel() {
     private val _checkoutRequest = MutableStateFlow<CheckoutRequest?>(null)
     val checkoutRequest: StateFlow<CheckoutRequest?> = _checkoutRequest.asStateFlow()
 
-    init { refresh() }
+    init {
+        refresh()
+        loadPacks()
+        viewModelScope.launch { billing.events.collect { onBillingEvent(it) } }
+        // Credit any Play purchase that completed while the app wasn't able to
+        // report it (killed mid-purchase, pending payment approved later, ...).
+        viewModelScope.launch {
+            billing.unconsumedPurchases().forEach { creditPlayPurchase(it, quiet = true) }
+        }
+    }
 
     fun refresh() {
         viewModelScope.launch {
@@ -87,25 +120,114 @@ class WalletViewModel(private val api: ApiService) : ViewModel() {
         }
     }
 
-    /** Creates a real Razorpay order; WalletScreen opens the Checkout SDK once [checkoutRequest] is set. */
-    fun purchase(diamonds: Int, rupees: Int) {
+    fun loadPacks() {
+        viewModelScope.launch {
+            try {
+                val resp = api.getCoinPackages()
+                val packages = resp.data
+                if (!resp.success || packages == null) {
+                    _packs.value = UiState.Error(resp.message ?: "Failed to load coin packs")
+                    return@launch
+                }
+                val products = try {
+                    billing.queryProducts(packages.mapNotNull { it.playProductId })
+                } catch (e: BillingUnavailableException) {
+                    _rechargeMessage.value = e.message
+                    emptyMap()
+                }
+                _packs.value = UiState.Success(packages.map { pkg ->
+                    val product = pkg.playProductId?.let { products[it] }
+                    CoinPack(
+                        packageId = pkg.id,
+                        playProductId = pkg.playProductId,
+                        coins = pkg.coins,
+                        priceLabel = product?.oneTimePurchaseOfferDetails?.formattedPrice ?: "₹${pkg.price}",
+                        product = product
+                    )
+                })
+            } catch (e: Exception) {
+                _packs.value = UiState.Error(e.message ?: "Network error")
+            }
+        }
+    }
+
+    /** Opens Google Play's purchase flow (which offers Razorpay as the alternative in India). */
+    fun purchase(activity: Activity, pack: CoinPack) {
         if (_isPurchasing.value) return
+        val product = pack.product
+        if (product == null) {
+            _rechargeMessage.value = "This pack isn't available on Google Play yet"
+            return
+        }
+        _isPurchasing.value = true
+        billing.launchPurchase(activity, product, userId)
+    }
+
+    private fun onBillingEvent(event: BillingEvent) {
+        when (event) {
+            is BillingEvent.PlayPurchases -> event.purchases.forEach { creditPlayPurchase(it, quiet = false) }
+            is BillingEvent.AlternativeBillingChosen -> startRazorpayCheckout(event.productId, event.externalTransactionToken)
+            BillingEvent.Cancelled -> {
+                _isPurchasing.value = false
+                _rechargeMessage.value = "Payment cancelled"
+            }
+            is BillingEvent.Failed -> {
+                _isPurchasing.value = false
+                _rechargeMessage.value = event.message
+            }
+        }
+    }
+
+    private fun creditPlayPurchase(purchase: Purchase, quiet: Boolean) {
+        if (purchase.purchaseState == Purchase.PurchaseState.PENDING) {
+            _isPurchasing.value = false
+            if (!quiet) _rechargeMessage.value = "Payment pending. Diamonds will be added once it completes."
+            return
+        }
+        if (purchase.purchaseState != Purchase.PurchaseState.PURCHASED) return
+        viewModelScope.launch {
+            try {
+                var credited = 0
+                for (productId in purchase.products) {
+                    val resp = api.verifyGooglePlayPurchase(GooglePlayVerifyRequest(productId, purchase.purchaseToken))
+                    if (resp.success && resp.data?.status == "SUCCEEDED") credited += resp.data.coins
+                }
+                if (credited > 0) {
+                    refresh()
+                    _rechargeMessage.value = "Recharge successful! +$credited 💎"
+                } else if (!quiet) {
+                    _rechargeMessage.value = "Payment is being processed. Diamonds will be added shortly."
+                }
+            } catch (e: Exception) {
+                // Purchase stays unconsumed, so it is retried on the next launch.
+                if (!quiet) _rechargeMessage.value = "Payment received, diamonds will be added shortly"
+            } finally {
+                if (!quiet) _isPurchasing.value = false
+            }
+        }
+    }
+
+    /** User picked Razorpay on Play's choice screen: create our own order for the same pack. */
+    private fun startRazorpayCheckout(productId: String, externalTransactionToken: String) {
         viewModelScope.launch {
             _isPurchasing.value = true
             try {
-                val resp = api.createPayment(CreatePaymentRequest(coins = diamonds, amount = rupees))
+                val resp = api.createPayment(
+                    CreatePaymentRequest(playProductId = productId, externalTransactionToken = externalTransactionToken)
+                )
                 val data = resp.data
                 if (resp.success && data != null && !data.providerKeyId.isNullOrBlank()) {
                     RazorpayCheckoutBridge.onResult = { success, razorpayPaymentId, signature, errorMessage ->
                         onCheckoutResult(data.paymentId, success, razorpayPaymentId, signature, errorMessage)
                     }
+                    val coins = (_packs.value as? UiState.Success)?.data?.firstOrNull { it.playProductId == productId }?.coins ?: 0
                     _checkoutRequest.value = CheckoutRequest(
                         paymentId = data.paymentId,
                         orderId = data.providerRef,
                         keyId = data.providerKeyId,
                         amountPaise = data.amount * 100,
                         currency = data.currency,
-                        diamonds = diamonds
+                        diamonds = coins
                     )
                 } else {
                     _rechargeMessage.value = resp.message ?: "Could not start payment"

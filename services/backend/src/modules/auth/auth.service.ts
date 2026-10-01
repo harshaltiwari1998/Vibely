@@ -107,6 +107,7 @@ export class AuthService {
     if (!ok) throw new UnauthorizedException("Invalid credentials");
     if (user.status === "BANNED") throw new ForbiddenException("Account banned");
     if (user.status === "SUSPENDED") throw new ForbiddenException("Account suspended");
+    if (user.status === "DELETED") throw new UnauthorizedException("Invalid credentials");
 
     const tokens = this.issueTokens(user.id, user.email, user.role as Role);
     await this.createSession(user.id, tokens.refreshToken);

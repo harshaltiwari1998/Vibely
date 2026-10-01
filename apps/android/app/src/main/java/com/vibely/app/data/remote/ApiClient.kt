@@ -1,6 +1,7 @@
 package com.vibely.app.data.remote
 
 import android.content.Context
+import com.vibely.app.BuildConfig
 import com.vibely.app.data.local.TokenManager
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -37,7 +38,8 @@ object ApiClient {
             synchronized(ApiClient::class) {
                 if (retrofit == null) {
                     val logging = HttpLoggingInterceptor()
-                    logging.level = HttpLoggingInterceptor.Level.BODY
+                    // Bodies include auth tokens and personal data; never log them in release.
+                    logging.level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY else HttpLoggingInterceptor.Level.NONE
 
                     val client = OkHttpClient.Builder()
                         .addInterceptor(authInterceptor(tokenManager))

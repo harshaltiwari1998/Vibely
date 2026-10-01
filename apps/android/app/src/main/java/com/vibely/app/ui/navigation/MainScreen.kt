@@ -73,6 +73,7 @@ import com.vibely.app.ui.profile.ProfileScreen
 import com.vibely.app.ui.search.SearchScreen
 import com.vibely.app.ui.settings.BlocklistScreen
 import com.vibely.app.ui.settings.SettingsScreen
+import com.vibely.app.data.payment.BillingManager
 import com.vibely.app.ui.tasks.TaskCenterScreen
 import com.vibely.app.ui.viewmodel.BadgesViewModel
 import com.vibely.app.ui.viewmodel.CallViewModel
@@ -116,7 +117,10 @@ fun MainScreen(api: ApiService, token: String?, userId: String?, onLogout: () ->
     var incomingRequest by remember { mutableStateOf<IncomingMatchRequest?>(null) }
     var respondingToRequest by remember { mutableStateOf(false) }
 
-    val walletViewModel = remember { WalletViewModel(api) }
+    val appContext = androidx.compose.ui.platform.LocalContext.current.applicationContext
+    val billingManager = remember { BillingManager(appContext) }
+    androidx.compose.runtime.DisposableEffect(Unit) { onDispose { billingManager.close() } }
+    val walletViewModel = remember { WalletViewModel(api, billingManager, userId) }
     val messagesViewModel = remember { MessagesViewModel(api) }
     val notificationsViewModel = remember { NotificationsViewModel(api) }
     val callViewModel = remember { CallViewModel(api) }
@@ -344,7 +348,7 @@ fun MainScreen(api: ApiService, token: String?, userId: String?, onLogout: () ->
                     VipScreen(viewModel = vipViewModel, onWalletChanged = { walletViewModel.refresh() })
                 }
                 composable(Screen.Settings.route) {
-                    SettingsScreen(onLogout = onLogout, onOpenBlacklist = { navController.navigate(Screen.Blacklist.route) })
+                    SettingsScreen(api = api, onLogout = onLogout, onOpenBlacklist = { navController.navigate(Screen.Blacklist.route) })
                 }
                 composable(Screen.Blacklist.route) {
                     val blocklistViewModel = remember { BlocklistViewModel(api) }

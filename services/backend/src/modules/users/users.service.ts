@@ -1,4 +1,6 @@
-import { Injectable, NotFoundException, ConflictException } from "@nestjs/common";
+import { Injectable, NotFoundException, ConflictException, UnauthorizedException } from "@nestjs/common";
+import { randomBytes } from "crypto";
+import * as bcrypt from "bcryptjs";
 import { PrismaService } from "../../database/prisma.service";
 import { createLogger } from "@vibely/shared";
 import { UpdatePreferencesDto, UpdateProfileDto, UpdateAvatarDto, UpdateMeDto } from "./dto";
@@ -186,6 +188,52 @@ export class UsersService {
 
   async revokeSession(userId: string, sessionId: string) {
     await this.prisma.userSession.deleteMany({ where: { id: sessionId, userId } });
+    return { success: true };
+  }
+
+  /**
+   * Permanently deletes the account as required by Google Play's account
+   * deletion policy. Personal data is erased; financial records (payments,
+   * coin transactions, withdrawals) stay attached to the now-anonymous row
+   * because they must be retained for accounting/legal reasons.
+   */
+  async deleteAccount(userId: string, password: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user || user.status === "DELETED") throw new NotFoundException("User not found");
+    const ok = await bcrypt.compare(password, user.passwordHash);
+    if (!ok) throw new UnauthorizedException("Incorrect password");
+
+    const tag = userId.replace(/-/g, "");
+    await this.prisma.$transaction([
+      this.prisma.family.deleteMany({ where: { ownerId: userId } }),
+      this.prisma.userSession.deleteMany({ where: { userId } }),
+      this.prisma.device.deleteMany({ where: { userId } }),
+      this.prisma.notification.deleteMany({ where: { userId } }),
+      this.prisma.favorite.deleteMany({ where: { OR: [{ ownerId: userId }, { targetUserId: userId }] } }),
+      this.prisma.userPreference.deleteMany({ where: { userId } }),
+      this.prisma.profile.updateMany({
+        where: { userId },
+        data: { bio: null, interests: [], onlineStatus: "OFFLINE" },
+      }),
+      this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          username: `deleted_${tag}`,
+          email: `deleted_${tag}@deleted.invalid`,
+          passwordHash: await bcrypt.hash(randomBytes(32).toString("hex"), 10),
+          avatarUrl: null,
+          verificationToken: null,
+          verificationExpires: null,
+          referralCode: null,
+          featuredBadgeId: null,
+          familyId: null,
+          chatPricePerMinute: 0,
+          status: "DELETED",
+          deletedAt: new Date(),
+        },
+      }),
+    ]);
+    logger.info("Account deleted", { userId });
     return { success: true };
   }
 }

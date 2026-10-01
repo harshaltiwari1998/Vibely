@@ -49,3 +49,9 @@ export class UpdateMeDto {
   @IsEnum(Gender)
   gender?: Gender;
 }
+
+export class DeleteAccountDto {
+  @IsString()
+  @MinLength(1)
+  password!: string;
+}

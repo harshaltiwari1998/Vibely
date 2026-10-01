@@ -32,7 +32,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import android.widget.Toast
@@ -44,11 +43,6 @@ import com.vibely.app.ui.viewmodel.UiState
 import com.vibely.app.ui.viewmodel.WalletViewModel
 import org.json.JSONObject
 
-private data class DiamondPack(val diamonds: String, val strike: String, val price: String) {
-    /** "INR 270.00" -> 270 (Razorpay order amounts are whole rupees here; paise conversion happens server-side). */
-    fun rupees(): Int = price.substringAfter(" ").toDoubleOrNull()?.toInt() ?: 0
-}
-
 @Composable
 fun WalletScreen(viewModel: WalletViewModel) {
     var recommendTab by remember { mutableStateOf(true) }
@@ -58,6 +52,7 @@ fun WalletScreen(viewModel: WalletViewModel) {
     val isPurchasing by viewModel.isPurchasing.collectAsState()
     val rechargeMessage by viewModel.rechargeMessage.collectAsState()
     val checkoutRequest by viewModel.checkoutRequest.collectAsState()
+    val packsState by viewModel.packs.collectAsState()
 
     LaunchedEffect(rechargeMessage) {
         rechargeMessage?.let {
@@ -90,16 +85,7 @@ fun WalletScreen(viewModel: WalletViewModel) {
         }
         viewModel.consumeCheckoutRequest()
     }
-    val singlePacks = listOf(
-        DiamondPack("18480", "16800", "INR 270.00"),
-        DiamondPack("38640", "33600", "INR 540.00"),
-        DiamondPack("70000", "56000", "INR 900.00")
-    )
-    val bundlePacks = listOf(
-        DiamondPack("193200", "168000", "INR 2700.00"),
-        DiamondPack("386400", "336000", "INR 5400.00"),
-        DiamondPack("616000", "560000", "INR 9000.00")
-    )
+    val packs = (packsState as? UiState.Success)?.data.orEmpty()
 
     Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF8FAFC))) {
         Column(modifier = Modifier.fillMaxWidth().background(Brush.horizontalGradient(listOf(Color(0xFFB13BF0), Color(0xFF9350F5)))).padding(20.dp)) {
@@ -131,23 +117,36 @@ fun WalletScreen(viewModel: WalletViewModel) {
                 Text("💳 all wallet", color = Color(0xFFEF4444), fontWeight = FontWeight.Bold, modifier = Modifier.clip(RoundedCornerShape(24.dp)).background(Color(0xFFFFE7E7)).clickable { Toast.makeText(context, "Opening payment methods…", Toast.LENGTH_SHORT).show() }.padding(horizontal = 16.dp, vertical = 12.dp))
             }
             Text("Weekly Special Offers", color = Color(0xFF111827), fontWeight = FontWeight.Black, fontSize = 20.sp, modifier = Modifier.padding(top = 22.dp))
+            when (val state = packsState) {
+                is UiState.Loading -> Text("Loading packs…", color = Color(0xFF9CA3AF), modifier = Modifier.padding(top = 12.dp))
+                is UiState.Error -> Text(
+                    "${state.message} · Tap to retry",
+                    color = Color(0xFFEF4444),
+                    modifier = Modifier.padding(top = 12.dp).clickable { viewModel.loadPacks() }
+                )
+                else -> {}
+            }
             LazyVerticalGrid(columns = GridCells.Fixed(3), modifier = Modifier.padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                items(singlePacks + bundlePacks) { pack ->
+                items(packs) { pack ->
                     Column(
                         modifier = Modifier
                             .alpha(if (isPurchasing) 0.6f else 1f)
                             .clip(RoundedCornerShape(14.dp))
                             .background(Color.White)
                             .clickable(enabled = !isPurchasing) {
-                                viewModel.purchase(pack.diamonds.toIntOrNull() ?: 0, pack.rupees())
+                                val activity = context as? Activity
+                                if (activity == null) {
+                                    Toast.makeText(context, "Can't open payment here", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    viewModel.purchase(activity, pack)
+                                }
                             }
                             .padding(12.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text("💎 ${pack.diamonds}", fontWeight = FontWeight.Black, fontSize = 15.sp, color = Color(0xFF111827))
-                        Text(pack.strike, fontSize = 11.sp, color = Color(0xFFB9AFC2), textDecoration = TextDecoration.LineThrough)
+                        Text("💎 ${pack.coins}", fontWeight = FontWeight.Black, fontSize = 15.sp, color = Color(0xFF111827))
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text(pack.price, color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Color(0xFFE64AA0)).padding(horizontal = 8.dp, vertical = 6.dp))
+                        Text(pack.priceLabel, color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Color(0xFFE64AA0)).padding(horizontal = 8.dp, vertical = 6.dp))
                     }
                 }
             }

@@ -11,7 +11,7 @@ import {
 import { UsersService } from "./users.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
-import { UpdatePreferencesDto, UpdateProfileDto, UpdateAvatarDto, UpdateMeDto } from "./dto";
+import { UpdatePreferencesDto, UpdateProfileDto, UpdateAvatarDto, UpdateMeDto, DeleteAccountDto } from "./dto";
 
 @Controller("users")
 @UseGuards(JwtAuthGuard)
@@ -78,6 +78,11 @@ export class UsersController {
   @Post("me")
   updateMe(@CurrentUser() user: { id: string }, @Body() dto: UpdateMeDto) {
     return this.users.updateMe(user.id, dto);
+  }
+
+  @Post("me/delete")
+  deleteAccount(@CurrentUser() user: { id: string }, @Body() dto: DeleteAccountDto) {
+    return this.users.deleteAccount(user.id, dto.password);
   }
 
   @Get("me/sessions")
