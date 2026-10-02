@@ -30,4 +30,7 @@ COPY --from=builder /app/services/backend/prisma ./services/backend/prisma
 COPY --from=builder /app/services/backend/package.json ./services/backend/package.json
 
 EXPOSE 4000
-CMD ["node", "services/backend/dist/main.js"]
+# Apply pending migrations on every start: the database is only reachable from
+# inside Railway's private network, so they can't be run from a dev machine.
+# A failed migration is logged but doesn't keep the API down.
+CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy --schema services/backend/prisma/schema.prisma || echo 'MIGRATION FAILED - see error above'; exec node services/backend/dist/main.js"]
